@@ -516,9 +516,10 @@ input[type=range]{accent-color:var(--accent);width:100%}
 "use strict";
 try{ const g0=localStorage.getItem('armadio-g'); if(g0) document.documentElement.dataset.g=g0; }catch(e){}
 /* ================= VERSIONE ================= */
-const APP_VERSION='3.1';
+const APP_VERSION='3.1.1';
 const APP_DATE='25 novembre 2026';
 const CHANGELOG=[
+  ['3.1.1','Il backup ora contiene anche le foto: si può spostare tutto l\'armadio sull\'app installata o su un altro dispositivo'],
   ['3.1','App installabile: dalla versione su GitHub si mette sulla schermata Home con la sua icona, si apre a schermo intero e funziona anche senza internet (Impostazioni → Installa l\'app)'],
   ['3.0.2','Icone accanto alle categorie (magliette, felpe, pantaloni, gonne, vestiti, giacche, scarpe, borse, accessori)'],
   ['3.0.1','Armadio: tolto il filtro “Tutto”; per tornare a vedere tutti i capi tocca di nuovo la categoria selezionata'],
@@ -3136,8 +3137,8 @@ function viewImpostazioni(){
     <div class="panel stack"><div class="flabel">Valuta</div><select class="input" id="set-cur" style="max-width:200px">${CURRENCIES.map(c=>`<option ${S.settings.currency===c?'selected':''}>${c}</option>`).join('')}</select></div>
     <div class="panel stack"><div class="flabel">Prova</div><p style="margin:0" class="small">${isDemo()?'Stai usando l\'armadio di esempio.':'Mostra un armadio di esempio senza toccare i tuoi dati (solo se il tuo è vuoto).'}</p><div class="row">${isDemo()?'<button class="btn" data-act="exit-demo">Esci dalla prova</button>':`<button class="btn" data-act="enter-demo" ${hasReal()?'disabled':''}>Guarda l'esempio</button>`}</div></div>
   </div><div class="stack">
-    <div class="panel stack"><div class="flabel">Backup</div><p style="margin:0" class="small">Esporta tutto in un file JSON (le foto restano salvate qui e il file contiene i loro riferimenti). Puoi reimportarlo in qualsiasi momento.</p>
-      <div class="row"><button class="btn" id="set-exp" ${isDemo()?'disabled':''}>Esporta backup</button><button class="btn" id="set-imp" ${isDemo()?'disabled':''}>Importa backup</button><input type="file" id="set-file" accept="application/json,.json" class="hidden"></div>
+    <div class="panel stack"><div class="flabel">Backup</div><p style="margin:0" class="small">Esporta tutto in un file, foto comprese. Con “Importa backup” lo riapri qui, sull'app installata o su un altro dispositivo.</p>
+      <div class="row"><button class="btn" id="set-exp" ${isDemo()?'disabled':''}>Esporta backup</button><button class="btn" id="set-imp">Importa backup</button><input type="file" id="set-file" accept="application/json,.json" class="hidden"></div>
       <textarea class="input hidden" id="set-out" readonly style="min-height:120px;font-size:12px"></textarea></div>
     <div class="panel stack ${location.protocol.startsWith('http')&&!/claudeusercontent|claude\.ai/.test(location.host)?'':'hidden'}" id="pwa-panel"><div class="flabel">App sul telefono e sul computer</div>
       <p style="margin:0" class="small muted" id="pwa-txt">${PWA.installed()?'Stai usando l\'app installata: si apre a schermo intero e funziona anche senza internet.':'Installala: avrai l\'icona sulla schermata Home, si apre a schermo intero e funziona anche senza internet.'}</p>
@@ -3158,20 +3159,40 @@ function bindImpostazioni(v){
     const ok=await aiSelfTest(); clearInterval(tick); lg.textContent=AI.log.join('\n'); at.disabled=false; at.textContent='Verifica il ritaglio preciso'; toast(ok?'Il ritaglio preciso funziona':'Il ritaglio preciso non funziona qui: vedi i dettagli'); };
   $('#set-cur',v).onchange=e=>{ S.settings.currency=e.target.value; if(!isDemo()) R.settings.currency=e.target.value; Store.saveSettings(); render(); toast('Valuta aggiornata'); };
   $('#set-g',v).onclick=e=>{ const b=e.target.closest('[data-g]'); if(!b) return; setGender(b.dataset.g); toast('Stile aggiornato'); };
+  // le foto viaggiano dentro il backup, così si possono spostare su un altro dispositivo o sull'app installata
+  const IMG_FIELDS={items:['img','imgOrig'],outfits:['photo'],logs:['selfie'],trips:[],wish:['img']};
+  const refToData=async ref=>{ if(!ref) return ref; if(ref.d) return {d:ref.d}; const src=imgSrc(ref); if(!src) return null;
+    try{ const r=await fetch(src); if(!r.ok) return null; return {d:await blobToDataURL(await r.blob())}; }catch(e){ return null; } };
   $('#set-exp',v).onclick=async()=>{
-    const data=JSON.stringify({app:'diario-armadio',version:1,exported:new Date().toISOString(),data:{items:R.items,outfits:R.outfits,logs:R.logs,trips:R.trips,wish:R.wish,settings:R.settings}},null,1);
+    const btn=$('#set-exp',v); btn.disabled=true; const total=Object.values(R.items).length; btn.textContent='Preparo il backup…';
+    const out={}; let done=0, lost=0;
+    for(const key of ['items','outfits','logs','trips','wish']){ out[key]={};
+      for(const [id,doc] of Object.entries(R[key]||{})){ const c=clone(doc);
+        for(const f of IMG_FIELDS[key]){ if(c[f]){ const d=await refToData(c[f]); if(d) c[f]=d; else { lost++; delete c[f]; } } }
+        out[key][id]=c; if(key==='items'){ done++; btn.textContent=`Preparo il backup… ${done}/${total}`; } } }
+    const data=JSON.stringify({app:'diario-armadio',version:2,exported:new Date().toISOString(),withPhotos:true,data:Object.assign(out,{settings:R.settings})});
+    btn.disabled=false; btn.textContent='Esporta backup';
     const name='armadio-backup-'+todayStr()+'.json';
-    if(Store.downloads){ try{ await Store.downloads.save({filename:name,data}); toast('Backup pronto'); return; }catch(e){ console.warn(e); } }
-    const out=$('#set-out',v); out.value=data; out.classList.remove('hidden'); out.select();
+    if(Store.downloads){ try{ await Store.downloads.save({filename:name,data}); toast('Backup pronto, con le foto'+(lost?` (${lost} non recuperate)`:'')); return; }catch(e){ console.warn(e); } }
+    try{ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([data],{type:'application/json'})); a.download=name; document.body.appendChild(a); a.click(); a.remove(); toast('Backup scaricato, con le foto'); return; }catch(e){}
+    const o=$('#set-out',v); o.value=data; o.classList.remove('hidden'); o.select();
     try{ await navigator.clipboard.writeText(data); toast('Backup copiato negli appunti: incollalo in un file .json'); }catch(e){ toast('Copia il testo qui sotto e salvalo in un file .json'); }
   };
   $('#set-imp',v).onclick=()=>$('#set-file',v).click();
-  $('#set-file',v).onchange=async e=>{ const f=e.target.files[0]; if(!f) return;
-    try{ const j=JSON.parse(await f.text()); const d=j.data||j; let n=0;
-      for(const [kind,key] of Object.entries(KIND)){ for(const doc of Object.values(d[key]||{})){ if(doc&&doc.id&&/^[A-Za-z0-9_\-.~:@+]+$/.test(doc.id)){ Store.put(kind,doc); n++; } } }
-      if(d.settings){ S.settings=Object.assign({currency:'EUR'},d.settings); Store.saveSettings(); }
-      render(); toast(n+' elementi importati');
-    }catch(err){ toast('Il file non è un backup valido.'); } };
+  $('#set-file',v).onchange=async e=>{ const f=e.target.files[0]; e.target.value=''; if(!f) return;
+    try{ const j=JSON.parse(await f.text()); const d=j.data||j; let n=0, ph=0;
+      if(isDemo()) exitDemo(true);
+      toast('Importo il backup…');
+      for(const [kind,key] of Object.entries(KIND)){ for(const doc of Object.values(d[key]||{})){ if(!(doc&&doc.id&&/^[A-Za-z0-9_\-.~:@+]+$/.test(doc.id))) continue;
+        const c=clone(doc);
+        for(const fld of (IMG_FIELDS[key]||[])){ const ref=c[fld]; if(!ref) continue;
+          if(ref.d && ref.d.startsWith('data:image/')){ try{ const blob=await (await fetch(ref.d)).blob(); c[fld]=await Store.saveImage(blob); ph++; }catch(_){ } }
+          else if(ref.a && !imgSrcOk(ref)) delete c[fld]; }
+        Store.put(kind,c); n++; } }
+      if(d.settings){ R.settings=Object.assign({currency:'EUR'},R.settings,d.settings); S=R; Store.saveSettings(true); applyGender(); }
+      render(); toast(`${n} elementi importati${ph?`, ${ph} foto`:''}`);
+    }catch(err){ console.warn(err); toast('Il file non è un backup valido.'); } };
+  function imgSrcOk(ref){ return Store.mode==='cloud' && !!ref.a; }
   $('#set-wipe',v).onclick=async()=>{ if(!await askConfirm('Cancellare davvero tutto? Non si può annullare.','Cancella tutto')) return;
     for(const [kind,key] of Object.entries(KIND)) for(const id of Object.keys(R[key])){ const doc=R[key][id]; if(doc.img) Store.dropImage(doc.img); if(doc.selfie) Store.dropImage(doc.selfie); Store.remove(kind,id); }
     render(); toast('Tutti i dati sono stati cancellati'); };

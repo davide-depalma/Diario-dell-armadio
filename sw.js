@@ -1,7 +1,7 @@
 /* Diario dell'Armadio — funziona anche senza internet.
    L'app si aggiorna da sola: la pagina viene sempre presa da internet quando c'è, altrimenti dalla copia salvata.
    Caratteri, motore e modello del ritaglio si scaricano una volta e restano salvati. */
-const VERSION = 'armadio-v3.1';
+const VERSION = 'armadio-v3.1.2';   // le cache delle altre app sullo stesso sito (es. RailOps Hub) non vengono toccate
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png', './icons/favicon-32.png'];
 const RUNTIME = 'armadio-risorse';
 
@@ -9,7 +9,7 @@ self.addEventListener('install', e => {
   e.waitUntil(caches.open(VERSION).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
 });
 self.addEventListener('activate', e => {
-  e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== VERSION && k !== RUNTIME).map(k => caches.delete(k)))).then(() => self.clients.claim()));
+  e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k.startsWith('armadio-') && k !== VERSION && k !== RUNTIME).map(k => caches.delete(k)))).then(() => self.clients.claim()));
 });
 self.addEventListener('message', e => { if (e.data === 'skipWaiting') self.skipWaiting(); });
 
