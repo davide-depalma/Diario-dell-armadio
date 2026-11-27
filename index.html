@@ -90,6 +90,24 @@ h1,h2,h3{font-family:var(--display);font-weight:500;text-wrap:balance;margin:0;l
 .sync.ok::before{background:var(--good);box-shadow:0 0 0 3px color-mix(in srgb,var(--good) 20%,transparent)}
 .sync.warn::before{background:var(--warn);box-shadow:0 0 0 3px color-mix(in srgb,var(--warn) 20%,transparent)}
 .sync.err::before{background:var(--bad)}
+.sync.link{cursor:pointer}
+.mast-r{flex-wrap:nowrap}
+.acct{display:inline-flex;align-items:center;justify-content:center;font-size:11px;letter-spacing:.12em;color:var(--ink);text-decoration:none;border-bottom:1px solid currentColor;line-height:1.4}
+.acct:empty{display:none}
+.acct.in{width:24px;height:24px;border-radius:50%;overflow:hidden;border:1px solid var(--line-strong);background:var(--well);letter-spacing:0;font-weight:600}
+.acct.in img{width:100%;height:100%;object-fit:cover;display:block}
+.acct.in i{font-style:normal;font-size:12px}
+.gbtn{background:#fff;color:#1f1f1f;border-color:#dadce0;font-weight:600}
+.gbtn:hover{border-color:#c4c7c5;background:#f8f9fa}
+.gbtn svg{flex:none}
+.acct-card{display:flex;align-items:center;gap:12px}
+.acct-card img,.acct-card>i{width:46px;height:46px;border-radius:50%;object-fit:cover;flex:none;border:1px solid var(--line)}
+.acct-card>i{display:inline-flex;align-items:center;justify-content:center;font-style:normal;font-size:20px;font-weight:600;background:var(--well)}
+.acct-card>div{display:flex;flex-direction:column;min-width:0}
+.acct-card>div span{overflow:hidden;text-overflow:ellipsis}
+.acct-panel code{font-size:12px;background:var(--well);padding:2px 6px;border-radius:6px;word-break:break-all}
+.welcome-acct{display:flex;flex-direction:column;align-items:center;gap:8px;margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
+
 .brandrow{position:relative;font-size:clamp(46px,10vw,118px);margin:20px 0 6px}
 .brandrow .wordmark{margin:0;font-size:1em}
 .logo-mark{position:absolute;left:0;top:0;width:.9em;height:.9em;color:var(--ink);--logo-acc:#b85a3c;display:block;visibility:hidden;pointer-events:auto;transform-origin:50% 10.8%;z-index:1}.logo-mark.ok{visibility:visible}
@@ -524,7 +542,7 @@ input[type=range]{accent-color:var(--accent);width:100%}
 </head>
 <body>
 <header class="mast wrap">
-  <div class="mast-top"><span id="issue-line"></span><span class="row" style="gap:14px"><a href="#impostazioni" id="ver" class="ver" title="Novità della versione"></a><span id="sync" class="sync">Caricamento…</span></span></div>
+  <div class="mast-top"><span id="issue-line"></span><span class="row mast-r" style="gap:14px"><a href="#impostazioni" id="ver" class="ver" title="Novità della versione"></a><span id="sync" class="sync">Caricamento…</span><a href="#impostazioni" id="acct" class="acct" aria-label="Account"></a></span></div>
   <div class="brandrow"><span class="logo-mark"><svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M60 41 V34 C60 28.5 68.5 27 68.5 19.5 C68.5 13 63 9.5 58 10.2 C54 10.8 51.6 13.8 51.8 17.4" fill="none" stroke="var(--paper)" stroke-width="12" stroke-linecap="round"/><g fill="none" stroke="currentColor" stroke-width="5.2" stroke-linecap="round" stroke-linejoin="round"><path d="M60 41 V34 C60 28.5 68.5 27 68.5 19.5 C68.5 13 63 9.5 58 10.2 C54 10.8 51.6 13.8 51.8 17.4"/><path d="M60 41 L13.5 74.5 Q10.8 77.6 14.6 78.6 H105.4 Q109.2 77.6 106.5 74.5 Z"/><path d="M60 47 V77" stroke-width="3.2"/></g><g stroke="currentColor" stroke-width="2.6" stroke-linecap="round" opacity=".55"><path d="M44.5 60 H53"/><path d="M33 68.5 H53"/><path d="M67 60 H75.5"/><path d="M67 68.5 H87"/></g><path d="M83 80 V102 L88.5 97.2 L94 102 V80 Z" fill="var(--logo-acc)"/></svg></span><h1 class="wordmark">Diario <em>dell'</em>Armadio</h1></div>
   <p class="tagline">Cataloga i tuoi capi, registra cosa indossi ogni giorno e scopri quanto ti costa ogni uscita.</p>
 </header>
@@ -547,9 +565,10 @@ input[type=range]{accent-color:var(--accent);width:100%}
 "use strict";
 try{ const g0=localStorage.getItem('armadio-g'); if(g0) document.documentElement.dataset.g=g0; }catch(e){}
 /* ================= VERSIONE ================= */
-const APP_VERSION='3.4';
+const APP_VERSION='3.5';
 const APP_DATE='27 novembre 2026';
 const CHANGELOG=[
+  ['3.5','Account con Google (facoltativo): accedi da Impostazioni o dalla schermata di benvenuto e capi, outfit, calendario, viaggi, wishlist e foto restano allineati da soli tra telefono e computer. I dati vanno in una cartella privata del tuo Google Drive che vede solo quest\'app. Funziona anche offline (sincronizza quando torna la rete) e, se modifichi lo stesso capo su due dispositivi, vince la modifica più recente. Senza accesso l\'app funziona come prima'],
   ['3.4','Foto con l\'AI dal telefono in un solo tocco: “Invia foto e testo a ChatGPT o Gemini” apre il menu Condividi e manda foto e testo insieme direttamente nell\'app scelta, senza copiare due cose e senza passare dal browser. Vale sia per la foto realistica dell\'outfit sia per “Rifalla con l\'AI”. Il vecchio metodo resta in “copia a mano”'],
   ['3.3','Provalo addosso: niente più manichino, l\'outfit si vede con i capi separati e sotto c\'è la foto realistica con l\'AI (chi la indossa, corporatura, stile, maglia infilata). Sul telefono “Apri Gemini” e “ChatGPT” aprono direttamente l\'app se è installata, altrimenti il sito'],
   ['3.2','Aggiornamenti: quando esce una versione nuova compare un avviso su Impostazioni; nella nuova sezione “Aggiornamenti” vedi le novità e aggiorni con “Aggiorna ora”. La sezione Versione ora è corta e lo storico completo si scarica come file .txt'],
@@ -982,10 +1001,11 @@ const Store = {
     this.chains[key]=p; return p;
   },
   put(kind, data){
-    data = clone(Object.assign({}, data, {kind}));
+    data = clone(Object.assign({}, data, {kind, upd:Date.now()}));
     S[KIND[kind]][data.id] = data;
     if (isDemo()) return Promise.resolve();
     const key = kind+'/'+data.id;
+    GSYNC.touch();
     if (this.mode==='cloud') return this.queue(key, ()=>this.cols[kind].doc(data.id).set(data));
     if (this.mode==='local') return this.queue(key, ()=>this.idbDo('put', key, data));
     return Promise.resolve();
@@ -994,6 +1014,7 @@ const Store = {
     delete S[KIND[kind]][id];
     if (isDemo()) return Promise.resolve();
     const key = kind+'/'+id;
+    GSYNC.markDead(key); GSYNC.touch();
     if (this.mode==='cloud') return this.queue(key, ()=>this.cols[kind].doc(id).delete());
     if (this.mode==='local') return this.queue(key, ()=>this.idbDo('delete', key));
     return Promise.resolve();
@@ -1001,10 +1022,15 @@ const Store = {
   saveSettings(force){
     if (isDemo() && !force) return Promise.resolve();
     const data = clone(R.settings);
+    if (this.mode==='local'){ GSYNC.noteSettings(); GSYNC.touch(); }
     if (this.mode==='cloud') return this.queue('settings', ()=>this.settingsDoc.set(data));
     if (this.mode==='local') return this.queue('settings', ()=>this.idbDo('put','settings',data));
     return Promise.resolve();
   },
+  /* scritture che arrivano dalla sincronizzazione: non cambiano l'orario di modifica e non ripartono verso il Drive */
+  putRaw(kind, rec){ R[KIND[kind]][rec.id]=rec; if(this.mode!=='local') return Promise.resolve(); return this.queue(kind+'/'+rec.id, ()=>this.idbDo('put', kind+'/'+rec.id, rec)); },
+  removeRaw(kind, id){ delete R[KIND[kind]][id]; if(this.mode!=='local') return Promise.resolve(); return this.queue(kind+'/'+id, ()=>this.idbDo('delete', kind+'/'+id)); },
+  saveSettingsRaw(){ if(this.mode!=='local') return Promise.resolve(); const data=clone(R.settings); return this.queue('settings', ()=>this.idbDo('put','settings',data)); },
   idbDo(op, key, val){
     return new Promise((res,rej)=>{
       const tx=this.idb.transaction('kv','readwrite'); const st=tx.objectStore('kv');
@@ -1024,7 +1050,8 @@ const Store = {
     if (ref && ref.a && this.assets && !isDemo()){ this.assets.delete(ref.a).catch(()=>{}); }
   }
 };
-function imgSrc(ref){ if(!ref) return ''; if(ref.a) return '/_blob/'+ref.a; if(ref.d && ref.d.startsWith('data:image/')) return ref.d; return ''; }
+const IMG_WAIT="data:image/svg+xml,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#ecebe8"/><path d="M34 62h34a10 10 0 0 0 0-20 14 14 0 0 0-27-3 11 11 0 0 0-7 23z" fill="none" stroke="#a3a2a8" stroke-width="3"/></svg>');
+function imgSrc(ref){ if(!ref) return ''; if(ref.a) return '/_blob/'+ref.a; if(ref.d && ref.d.startsWith('data:image/')) return ref.d; if(ref.h) return IMG_WAIT; return ''; }
 function blobToDataURL(blob){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=()=>rej(r.error); r.readAsDataURL(blob); }); }
 
 /* ================= SAGOME (capi senza foto) ================= */
@@ -1779,6 +1806,308 @@ async function pasteButton(onFile){
   try{ onFile(await readClipboardImage()); }
   catch(e){ toast(`Premi ${PASTE_HINT} per incollare l'immagine copiata`); }
 }
+</script>
+<script>
+/* ================= ACCOUNT GOOGLE + SINCRONIZZAZIONE =================
+   Accesso facoltativo con Google. I dati vanno in una cartella privata del Google Drive dell'utente
+   (appDataFolder: la vede solo quest'app, non compare tra i file). Senza accesso l'app funziona come prima.
+   Sul Drive: "armadio-dati.json" (capi, outfit, calendario, viaggi, wishlist, impostazioni, senza foto)
+   e una "img-<impronta>" per ogni foto. Vince sempre la modifica più recente. */
+const GOOGLE_CLIENT_ID = '';
+const GSYNC = {
+  scope: 'https://www.googleapis.com/auth/drive.appdata openid email profile',
+  authUrl: 'https://accounts.google.com/o/oauth2/v2/auth',
+  api: 'https://www.googleapis.com',
+  DATA: 'armadio-dati.json',
+  IMG_FIELDS: { items:['img','imgOrig'], outfits:['photo'], logs:['selfie'], trips:[], wish:['img'] },
+  busy:false, dirty:false, timer:null, last:0, lastOk:0, status:'', flash:'', fresh:false, waiters:[], firstDone:false, usage:null, progress:'',
+
+  /* ---------- stato ---------- */
+  clientId(){ return (lsGet('armadio-gclient')||'').trim() || GOOGLE_CLIENT_ID; },
+  supported(){ return /^https?:$/.test(location.protocol) && (location.protocol==='https:' || /^(localhost|127\.0\.0\.1)$/.test(location.hostname)) && !/claudeusercontent|claude\.ai/.test(location.host) && !!(window.crypto && crypto.subtle); },
+  redirectUri(){ return location.origin + location.pathname.replace(/index\.html$/,''); },
+  jget(k, def){ try{ const v=JSON.parse(lsGet(k)||'null'); return v==null?def:v; }catch(e){ return def; } },
+  jset(k, v){ lsSet(k, v==null?'':JSON.stringify(v)); },
+  profile(){ return this.jget('armadio-gprofile', null); },
+  token(){ const t=this.jget('armadio-gtoken', null); return t && t.t && t.exp > Date.now()+60000 ? t.t : null; },
+  signedIn(){ return !!this.profile(); },
+  needLogin(){ return lsGet('armadio-gneed')==='1'; },
+  ready(){ return this.supported() && this.signedIn() && !!this.token() && Store.mode==='local'; },
+
+  /* ---------- accesso (redirect: funziona anche nell'app installata su iPhone) ---------- */
+  async login(silent){
+    try{ await Promise.race([Promise.all(Object.values(Store.chains||{})), new Promise(r=>setTimeout(r,3000))]); }catch(e){}   /* prima finisco di salvare */
+    const id=this.clientId(); if(!id){ toast('Accesso con Google non ancora configurato'); return; }
+    if(!navigator.onLine){ toast('Serve internet per accedere'); return; }
+    const st=Math.random().toString(36).slice(2)+Date.now().toString(36);
+    this.jset('armadio-gstate', {s:st, route:location.hash||'', silent:!!silent, t:Date.now()});
+    const p=new URLSearchParams({client_id:id, redirect_uri:this.redirectUri(), response_type:'token', scope:this.scope, include_granted_scopes:'true', state:st});
+    const pr=this.profile();
+    if(silent){ p.set('prompt','none'); lsSet('armadio-gsilent', String(Date.now())); }
+    else p.set('prompt','select_account');
+    if(pr && pr.email) p.set('login_hint', pr.email);
+    location.assign(this.authUrl+'?'+p.toString());
+  },
+  catchRedirect(){
+    const h=location.hash; if(!/[#&](access_token|error)=/.test(h)) return;
+    const q=new URLSearchParams(h.slice(1)); const saved=this.jget('armadio-gstate', null); lsSet('armadio-gstate','');
+    try{ history.replaceState(null,'',location.pathname+location.search+((saved&&saved.route)||'')); }catch(e){ location.hash=(saved&&saved.route)||''; }
+    if(!saved || q.get('state')!==saved.s){ this.flash='Accesso non riuscito: riprova'; return; }
+    if(q.get('access_token')){
+      this.jset('armadio-gtoken', {t:q.get('access_token'), exp:Date.now()+(parseInt(q.get('expires_in'),10)||3600)*1000});
+      if(!this.profile()) this.jset('armadio-gprofile', {email:'', name:'', pic:''});
+      lsSet('armadio-gneed',''); this.fresh=!saved.silent;
+      const sc=q.get('scope')||'';
+      if(sc && !/drive\.appdata/.test(sc)){ this.flash='Per sincronizzare serve il permesso su Google Drive: accedi di nuovo e lascia la spunta su Drive'; this.noDrive=true; lsSet('armadio-gtoken',''); const pr=this.profile(); if(pr && !pr.email) lsSet('armadio-gprofile',''); }
+    } else {
+      const e=q.get('error')||'errore';
+      if(saved.silent){ lsSet('armadio-gneed','1'); }
+      else this.flash = e==='access_denied' ? 'Accesso annullato' : 'Accesso non riuscito ('+e+')';
+    }
+  },
+  /* rinnovo silenzioso del permesso (dura un'ora): un attimo di pagina bianca, poi si torna dove eri */
+  renewIfNeeded(){
+    if(!this.supported() || !this.clientId() || !this.signedIn() || this.token() || this.needLogin() || !navigator.onLine) return false;
+    if(Date.now()-(+lsGet('armadio-gsilent')||0) < 10*60e3) return false;
+    this.login(true); return true;
+  },
+  logout(){
+    const t=this.jget('armadio-gtoken', null);
+    if(t && t.t){ try{ fetch('https://oauth2.googleapis.com/revoke?token='+encodeURIComponent(t.t), {method:'POST', mode:'no-cors'}).catch(()=>{}); }catch(e){} }
+    lsSet('armadio-gtoken',''); lsSet('armadio-gprofile',''); lsSet('armadio-gneed',''); this.usage=null; this.status='';
+    setSync(Store.mode==='local'?'warn':'err', Store.mode==='local'?'Salvato solo in questo browser':'Salvataggio non disponibile'); this.paint(); toast('Sei uscito: i dati restano su questo dispositivo'); if(currentView()==='impostazioni') render();
+  },
+
+  /* ---------- Drive ---------- */
+  async call(path, opt={}){
+    const t=this.token(); if(!t) throw Object.assign(new Error('permesso scaduto'),{code:'auth'});
+    let r;
+    try{ r=await fetch(this.api+path, Object.assign({}, opt, {headers:Object.assign({Authorization:'Bearer '+t}, opt.headers||{})})); }
+    catch(e){ throw Object.assign(new Error('rete'),{code:'net'}); }
+    if(r.status===401){ lsSet('armadio-gtoken',''); throw Object.assign(new Error('permesso scaduto'),{code:'auth'}); }
+    if(r.status===403){ let m=''; try{ m=(await r.json()).error.message||''; }catch(e){} throw Object.assign(new Error(m||'accesso negato'),{code:/storageQuota|quota/i.test(m)?'quota':'forbidden'}); }
+    if(!r.ok) throw Object.assign(new Error('HTTP '+r.status),{code:'http'});
+    return r;
+  },
+  async list(q){
+    let out=[], tok='';
+    do{ const p=new URLSearchParams({spaces:'appDataFolder', q, fields:'nextPageToken,files(id,name,createdTime,size)', pageSize:'1000'}); if(tok) p.set('pageToken',tok);
+      const j=await (await this.call('/drive/v3/files?'+p.toString())).json(); out=out.concat(j.files||[]); tok=j.nextPageToken||''; } while(tok);
+    return out;
+  },
+  async create(name, blob){
+    const b='armadio'+Math.random().toString(36).slice(2);
+    const body=new Blob(['--'+b+'\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n'+JSON.stringify({name, parents:['appDataFolder']})+'\r\n--'+b+'\r\nContent-Type: '+(blob.type||'application/octet-stream')+'\r\n\r\n', blob, '\r\n--'+b+'--'], {type:'multipart/related; boundary='+b});
+    const j=await (await this.call('/upload/drive/v3/files?uploadType=multipart&fields=id', {method:'POST', headers:{'Content-Type':'multipart/related; boundary='+b}, body})).json();
+    return j.id;
+  },
+  async update(id, blob){ await this.call('/upload/drive/v3/files/'+encodeURIComponent(id)+'?uploadType=media', {method:'PATCH', headers:{'Content-Type':blob.type||'application/octet-stream'}, body:blob}); },
+  async download(id){ return (await this.call('/drive/v3/files/'+encodeURIComponent(id)+'?alt=media')).blob(); },
+  async remove(id){ await this.call('/drive/v3/files/'+encodeURIComponent(id), {method:'DELETE'}); },
+  async loadProfile(){
+    const j=await (await this.call('/oauth2/v3/userinfo')).json();
+    this.jset('armadio-gprofile', {email:j.email||'', name:j.given_name||j.name||'', full:j.name||'', pic:j.picture||'', sub:j.sub||''});
+    return this.profile();
+  },
+
+  /* ---------- registro locale delle modifiche ---------- */
+  dead(){ return this.jget('armadio-sync-dead', {}); },
+  markDead(key){ if(!this.supported()) return; const d=this.dead(); d[key]=Date.now(); this.jset('armadio-sync-dead', d); },
+  /* impostazioni: un orario per ogni voce, così su due dispositivi non si sovrascrivono tutte insieme */
+  noteSettings(){
+    const last=this.jget('armadio-sync-slast', null); if(!last) return;
+    const ts=this.jget('armadio-sync-sts', {}); const now=Date.now(); let ch=false;
+    for(const k of new Set([...Object.keys(R.settings||{}), ...Object.keys(last)])){
+      const v=JSON.stringify(R.settings[k]===undefined?null:R.settings[k]); if(v!==last[k]){ ts[k]=now; last[k]=v; ch=true; } }
+    if(ch){ this.jset('armadio-sync-sts', ts); this.jset('armadio-sync-slast', last); }
+  },
+  touch(){ if(!this.signedIn() || !this.supported()) return; this.dirty=true; clearTimeout(this.timer); this.timer=setTimeout(()=>this.sync('modifica'), 2500); },
+
+  /* ---------- foto ---------- */
+  async hashOf(d){ const buf=await crypto.subtle.digest('SHA-256', new TextEncoder().encode(d)); return Array.from(new Uint8Array(buf)).slice(0,20).map(b=>b.toString(16).padStart(2,'0')).join(''); },
+  async hashLocal(){
+    for(const [kind,key] of Object.entries(KIND)) for(const id of Object.keys(R[key])){
+      const rec=R[key][id]; let ch=false;
+      for(const f of this.IMG_FIELDS[key]||[]){ const ref=rec[f]; if(ref && ref.d && !ref.h){ ref.h=await this.hashOf(ref.d); ch=true; } }
+      if(ch) await Store.putRaw(kind, rec);
+    }
+  },
+  localIndex(){ const m={}; for(const key of Object.values(KIND)) for(const rec of Object.values(R[key])) for(const f of this.IMG_FIELDS[key]||[]){ const ref=rec[f]; if(ref && ref.h && ref.d) m[ref.h]=ref.d; } return m; },
+  strip(rec, key){ const c=clone(rec); for(const f of this.IMG_FIELDS[key]||[]){ const ref=c[f]; if(ref && typeof ref==='object'){ if(ref.h) c[f]={h:ref.h}; else delete c[f]; } } return c; },
+  updOf(rec){ return (rec && (rec.upd||rec.created)) || 0; },
+
+  /* ---------- la sincronizzazione ---------- */
+  async sync(reason){
+    if(!this.signedIn() || !this.supported()) return;
+    if(!this.token()){ this.paint(); return; }
+    if(Store.mode!=='local'){ return; }
+    if(!navigator.onLine){ this.status='offline'; this.paint(); return; }
+    if(this.busy){ this.dirty=true; return; }
+    clearTimeout(this.timer); this.busy=true; this.dirty=false; this.status='busy'; this.progress=''; this.paint();
+    let applied=0;
+    try{
+      if(this.fresh || !this.profile().email){ await this.loadProfile(); }
+      await this.hashLocal();
+      /* 1 · cosa c'è sul Drive */
+      const files=await this.list("name = '"+this.DATA+"'");
+      files.sort((a,b)=>String(a.createdTime).localeCompare(String(b.createdTime)));
+      const dataId=files[0] && files[0].id;
+      let remote={records:{}, dead:{}, settings:{v:{}, t:{}}};
+      if(dataId){ try{ const j=JSON.parse(await (await this.download(dataId)).text()); if(j && j.records) remote=Object.assign(remote, j); }catch(e){ if(e.code) throw e; } }
+      const imgs=await this.list("name contains 'img-'"); const imgMap={}; for(const f of imgs) if(/^img-[0-9a-f]+$/.test(f.name)) imgMap[f.name.slice(4)]=f;
+      /* 2 · unisco: vince la modifica più recente */
+      const local={}, snapUpd={};
+      for(const [kind,key] of Object.entries(KIND)) for(const [id,rec] of Object.entries(R[key])){ const k=kind+'/'+id; local[k]=this.strip(rec,key); snapUpd[k]=JSON.stringify(rec); }
+      const dead=Object.assign({}, remote.dead||{}); for(const [k,t] of Object.entries(this.dead())) if(!(dead[k]>=t)) dead[k]=t;
+      const cutoff=Date.now()-180*864e5; for(const k of Object.keys(dead)) if(dead[k]<cutoff) delete dead[k];
+      const merged={}, toApply=[], toDelete=[];
+      for(const k of new Set([...Object.keys(local), ...Object.keys(remote.records||{})])){
+        const L=local[k], Rm=(remote.records||{})[k];
+        const win = !L ? Rm : !Rm ? L : (this.updOf(L) > this.updOf(Rm) ? L : Rm);
+        if(dead[k] && dead[k] >= this.updOf(win)){ if(L) toDelete.push(k); continue; }
+        merged[k]=win;
+        if(win===Rm && (!L || JSON.stringify(L)!==JSON.stringify(Rm))) toApply.push(k);
+      }
+      /* impostazioni, voce per voce */
+      const lt=this.jget('armadio-sync-sts', {}), rv=(remote.settings&&remote.settings.v)||{}, rt=(remote.settings&&remote.settings.t)||{};
+      const sv={}, stt={}; let settingsChanged=false;
+      for(const k of new Set([...Object.keys(R.settings||{}), ...Object.keys(rv)])){
+        if(k==='upd') continue;
+        const has=R.settings[k]!==undefined, useRemote = k in rv && (!has || (rt[k]||0) >= (lt[k]||0));
+        if(useRemote){ sv[k]=rv[k]; stt[k]=rt[k]||0; if(JSON.stringify(R.settings[k])!==JSON.stringify(rv[k])) settingsChanged=true; }
+        else { sv[k]=R.settings[k]; stt[k]=lt[k]||0; }
+      }
+      /* 3 · porto qui le novità (foto comprese) */
+      const idx=this.localIndex(); let n=0;
+      { const want=new Set(); for(const k of toApply){ const key=KIND[k.split('/')[0]]; for(const f of this.IMG_FIELDS[key]||[]){ const ref=merged[k][f]; if(ref && ref.h && !idx[ref.h] && imgMap[ref.h]) want.add(ref.h); } }
+        const q=[...want], tot=q.length; let got=0;
+        const dlw=async()=>{ while(q.length){ const h=q.shift(); try{ idx[h]=await blobToDataURL(await this.download(imgMap[h].id)); }catch(e){ if(e.code==='auth') throw e; } got++; this.progress='Scarico foto '+got+'/'+tot; this.paint(); } };
+        await Promise.all([dlw(),dlw(),dlw(),dlw()]); }
+      for(const k of toApply){
+        const [kind,id]=k.split('/'); const key=KIND[kind]; if(!key) continue;
+        const cur=R[key][id]; if(cur && JSON.stringify(cur)!==snapUpd[k]) continue;   // l'hai cambiato proprio adesso: decide il prossimo giro
+        const rec=clone(merged[k]);
+        for(const f of this.IMG_FIELDS[key]||[]){ const ref=rec[f]; if(ref && ref.h){
+          if(idx[ref.h]) rec[f]={d:idx[ref.h], h:ref.h};
+          else if(imgMap[ref.h]){ n++; this.progress='Scarico foto '+n; this.paint(); try{ const d=await blobToDataURL(await this.download(imgMap[ref.h].id)); idx[ref.h]=d; rec[f]={d, h:ref.h}; }catch(e){ if(e.code==='auth') throw e; } } } }
+        await Store.putRaw(kind, rec); applied++;
+      }
+      for(const k of toDelete){ const [kind,id]=k.split('/'); const key=KIND[kind]; if(!key || !R[key][id]) continue; if(JSON.stringify(R[key][id])!==snapUpd[k]) continue; await Store.removeRaw(kind,id); applied++; }
+      if(settingsChanged){ for(const k of Object.keys(sv)) if(sv[k]!==undefined) R.settings[k]=sv[k]; await Store.saveSettingsRaw(); if(R.settings.gender) lsSet('armadio-g', R.settings.gender); applied++; }
+      /* foto che erano rimaste senza immagine */
+      for(const [kind,key] of Object.entries(KIND)) for(const rec of Object.values(R[key])){ let ch=false;
+        for(const f of this.IMG_FIELDS[key]||[]){ const ref=rec[f]; if(ref && ref.h && !ref.d){ if(idx[ref.h]){ ref.d=idx[ref.h]; ch=true; } else if(imgMap[ref.h]){ try{ ref.d=await blobToDataURL(await this.download(imgMap[ref.h].id)); idx[ref.h]=ref.d; ch=true; }catch(e){ if(e.code==='auth') throw e; } } } }
+        if(ch){ await Store.putRaw(kind, rec); applied++; } }
+      this.jset('armadio-sync-dead', dead);
+      const last={}; for(const k of Object.keys(sv)) last[k]=JSON.stringify(sv[k]===undefined?null:sv[k]);
+      this.jset('armadio-sync-slast', last); this.jset('armadio-sync-sts', stt);
+      if(applied){ if(isDemo() && hasReal()) exitDemo(true); scheduleRender(); }
+      /* 4 · mando le mie foto che sul Drive non ci sono */
+      const need=new Set(); for(const k of Object.keys(merged)){ const key=KIND[k.split('/')[0]]; for(const f of this.IMG_FIELDS[key]||[]){ const ref=merged[k][f]; if(ref && ref.h) need.add(ref.h); } }
+      const idx2=this.localIndex(); const up=[...need].filter(h=>!imgMap[h] && idx2[h]);
+      let done=0;
+      const worker=async()=>{ while(up.length){ const h=up.shift(); const blob=await (await fetch(idx2[h])).blob(); const id=await this.create('img-'+h, blob); imgMap[h]={id, name:'img-'+h, size:blob.size}; done++; this.progress='Invio foto '+done+'/'+(done+up.length); this.paint(); } };
+      await Promise.all([worker(), worker(), worker()]);
+      /* 5 · salvo l'elenco aggiornato (solo se è cambiato) */
+      const payload={app:'diario-armadio', v:1, records:merged, dead, settings:{v:sv, t:stt}};
+      const same = JSON.stringify(payload.records)===JSON.stringify(remote.records||{}) && JSON.stringify(dead)===JSON.stringify(remote.dead||{}) && JSON.stringify(payload.settings)===JSON.stringify(remote.settings||{});
+      if(!same){ payload.saved=Date.now(); payload.from=devKind(); const blob=new Blob([JSON.stringify(payload)], {type:'application/json'});
+        if(dataId) await this.update(dataId, blob); else await this.create(this.DATA, blob); }
+      for(const f of files.slice(1)) this.remove(f.id).catch(()=>{});
+      /* 6 · tolgo dal Drive le foto che non servono più (solo se vecchie di 2 giorni: un altro dispositivo potrebbe averle appena mandate) */
+      const old=Date.now()-2*864e5; let gc=0;
+      for(const [h,f] of Object.entries(imgMap)){ if(need.has(h) || gc>=40) continue; if(f.createdTime && Date.parse(f.createdTime)<old){ gc++; this.remove(f.id).then(()=>{ delete imgMap[h]; }).catch(()=>{}); } }
+      this.usage={files:Object.keys(imgMap).length, bytes:Object.values(imgMap).reduce((s,f)=>s+(+f.size||0),0)};
+      this.status='ok'; this.lastOk=Date.now(); this.err='';
+      if(this.fresh){ this.fresh=false; const p=this.profile(); toast((p&&p.name?'Ciao '+p.name+'! ':'')+'Armadio sincronizzato con Google Drive'); }
+    }catch(e){
+      console.warn('sincronizzazione', e);
+      this.status = e.code==='auth' ? 'auth' : e.code==='net' ? 'offline' : e.code==='quota' ? 'quota' : 'err'; this.err=e.message||'';
+      if(e.code==='auth' && document.visibilityState==='visible' && !document.querySelector('.modal')) { this.busy=false; if(this.renewIfNeeded()) return; }
+    }finally{
+      this.busy=false; this.last=Date.now(); this.progress=''; this.paint();
+      if(!this.firstDone){ this.firstDone=true; const w=this.waiters; this.waiters=[]; w.forEach(f=>{ try{ f(); }catch(e){} }); }
+      if(this.dirty && this.status==='ok') this.touch();
+      if(currentView()==='impostazioni' && !document.querySelector('.modal')) scheduleRender();
+    }
+  },
+  /* chiama fn dopo il primo giro di sincronizzazione (o subito, se non c'è niente da sincronizzare) */
+  afterFirst(fn){ if(this.firstDone || !this.ready()) fn(); else this.waiters.push(fn); },
+
+  /* ---------- interfaccia ---------- */
+  statusText(){   /* [tipo, testo breve in alto, testo completo nelle Impostazioni] */
+    if(!this.signedIn()) return null;
+    if(this.needLogin()) return ['warn','Accedi di nuovo','Google chiede di accedere di nuovo per sincronizzare'];
+    const pause=['warn','In pausa · tocca','Sincronizzazione in pausa: tocca “Sincronizza ora” per riprendere'];
+    if(!this.token()) return pause;
+    switch(this.status){
+      case 'busy': return ['warn', this.progress || 'Sincronizzo…', this.progress || 'Sincronizzo…'];
+      case 'ok': return ['ok','Sincronizzato','Sincronizzato con Google Drive'];
+      case 'offline': return ['warn','Offline','Offline: sincronizzo quando torna la rete'];
+      case 'auth': return pause;
+      case 'quota': return ['err','Drive pieno','Google Drive è pieno: libera spazio per continuare a sincronizzare'];
+      case 'err': return ['err','Non sincronizzato','Sincronizzazione non riuscita: riprovo tra poco'];
+      default: return ['warn','Sincronizzo…','Sincronizzo…'];
+    }
+  },
+  paint(){
+    const s=this.statusText(); const el=$('#sync');
+    if(s && el){ setSync(s[0], s[1]); el.classList.add('link'); el.title=s[2]; }
+    const a=$('#acct'); if(a){ const p=this.profile();
+      if(p){ a.innerHTML=p.pic?`<img src="${esc(p.pic)}" alt="" referrerpolicy="no-referrer">`:`<i>${esc((p.name||p.email||'?').charAt(0).toUpperCase())}</i>`; a.title=(p.full||p.name||'')+' · '+p.email; a.classList.add('in'); }
+      else { a.innerHTML=this.supported()&&this.clientId()?'Accedi':''; a.title='Accedi con Google'; a.classList.remove('in'); } }
+    const box=$('#acct-status'); if(box && s) box.innerHTML=`<span class="sync ${s[0]}">${esc(s[2])}</span>`+(this.lastOk&&this.status!=='busy'?` <span class="muted">· ultimo controllo alle ${new Date(this.lastOk).toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'})}</span>`:'');
+  },
+  googleBtn(id, label='Accedi con Google'){ return `<button class="btn gbtn" id="${id}" type="button"><svg viewBox="0 0 48 48" width="18" height="18" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.6 5.4 2.7 13.3l7.9 6.1C12.5 13.6 17.8 9.5 24 9.5z"/><path fill="#4285F4" d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.4c-.5 2.9-2.2 5.3-4.6 6.9l7.4 5.7c4.3-4 6.9-9.9 6.9-17.1z"/><path fill="#FBBC05" d="M10.6 28.6c-.5-1.4-.8-2.9-.8-4.6s.3-3.2.8-4.6l-7.9-6.1C1 16.6 0 20.2 0 24s1 7.4 2.7 10.7l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.4-5.7c-2.1 1.4-4.8 2.3-8.5 2.3-6.2 0-11.5-4.1-13.4-9.9l-7.9 6.1C6.6 42.6 14.6 48 24 48z"/></svg>${label}</button>`; },
+  panelHTML(){
+    const counts=[['capi',Object.keys(R.items).length],['outfit',Object.keys(R.outfits).length],['giorni',Object.keys(R.logs).length],['viaggi',Object.keys(R.trips).length],['desideri',Object.keys(R.wish).length]];
+    const cnt=`<p class="small muted num" style="margin:0">Su questo dispositivo: ${counts.map(([l,n])=>n+' '+l).join(' · ')}</p>`;
+    if(Store.mode==='cloud') return `<div class="flabel">Account e dati</div><p style="margin:0">I tuoi dati sono salvati nel cloud di Claude, in uno spazio privato visibile solo a te.</p><p class="small muted" style="margin:0">L'accesso con Google e la sincronizzazione con il Drive funzionano nell'app installata (dal sito GitHub).</p>${cnt}`;
+    if(!this.supported()) return `<div class="flabel">Account e dati</div><p style="margin:0">I dati sono salvati solo in questo browser. Esporta un backup di tanto in tanto.</p><p class="small muted" style="margin:0">L'accesso con Google e la sincronizzazione funzionano nell'app installata (dal sito GitHub).</p>${cnt}`;
+    if(!this.clientId()) return `<div class="flabel">Account Google</div><p style="margin:0" class="small">Per attivare l'accesso con Google serve l'<b>ID client</b> creato su Google Cloud (si fa una volta sola).</p>
+      <label class="f">ID client <input class="input" id="g-cid" placeholder="123…apps.googleusercontent.com"></label>
+      <p class="small muted" style="margin:0">Indirizzo da autorizzare su Google: <code class="num" style="user-select:all">${esc(this.redirectUri())}</code></p>
+      <div class="row"><button class="btn accent" id="g-cid-save" type="button">Salva e attiva</button></div>${cnt}`;
+    const p=this.profile();
+    if(!p) return `<div class="flabel">Account</div><p style="margin:0">Accedi con Google per ritrovare capi, outfit e foto su <b>tutti i tuoi dispositivi</b>: telefono e computer restano sempre allineati, da soli.</p>
+      <div class="row">${this.googleBtn('g-login')}</div>
+      <p class="small muted" style="margin:0">I dati vanno in una cartella privata del tuo Google Drive che vede solo quest'app (non compare tra i tuoi file). Senza accesso l'app funziona lo stesso, con i dati solo qui.</p>${cnt}`;
+    const u=this.usage; const mb=u?(u.bytes/1048576):0;
+    return `<div class="flabel">Account</div>
+      <div class="acct-card">${p.pic?`<img src="${esc(p.pic)}" alt="" referrerpolicy="no-referrer">`:`<i>${esc((p.name||p.email||'?').charAt(0).toUpperCase())}</i>`}<div><b>${esc(p.full||p.name||'Account Google')}</b><span class="small muted">${esc(p.email||'')}</span></div></div>
+      ${this.needLogin()?`<div class="banner" style="margin:0"><span>Google chiede di accedere di nuovo per continuare a sincronizzare.</span>${this.googleBtn('g-relogin','Accedi di nuovo')}</div>`:''}
+      <div class="small" id="acct-status"></div>
+      ${u?`<p class="small muted num" style="margin:0">Sul tuo Drive: ${u.files} foto · ${mb<1?Math.max(0.1,mb).toFixed(1):Math.round(mb)} MB</p>`:''}
+      <div class="row"><button class="btn" id="g-sync" type="button">Sincronizza ora</button><button class="btn ghost" id="g-logout" type="button">Esci</button></div>${cnt}`;
+  },
+  bindPanel(v){
+    const s=$('#g-cid-save',v); if(s) s.onclick=()=>{ const val=$('#g-cid',v).value.trim(); if(!/\.apps\.googleusercontent\.com$/.test(val)){ toast('L\'ID client finisce con .apps.googleusercontent.com'); return; } lsSet('armadio-gclient', val); render(); toast('Accesso con Google attivato'); };
+    const l=$('#g-login',v); if(l) l.onclick=()=>this.login(false);
+    const rl=$('#g-relogin',v); if(rl) rl.onclick=()=>{ lsSet('armadio-gneed',''); this.login(false); };
+    const sy=$('#g-sync',v); if(sy) sy.onclick=()=>{ if(!this.token()){ lsSet('armadio-gsilent',''); if(!this.renewIfNeeded()) this.login(false); return; } this.sync('manuale'); };
+    const lo=$('#g-logout',v); if(lo) lo.onclick=async()=>{ if(await askConfirm('Uscire dall\'account? I dati restano su questo dispositivo, ma smettono di sincronizzarsi.','Esci')) this.logout(); };
+    this.paint();
+  },
+  boot(){
+    if(this.flash){ setTimeout(()=>toast(this.flash), 400); }
+    const sy=$('#sync'); if(sy) sy.addEventListener('click', ()=>{ if(!this.signedIn()) return;
+      if(!this.token() && !this.needLogin()){ lsSet('armadio-gsilent',''); if(this.renewIfNeeded()) return; }
+      location.hash='impostazioni'; });
+    this.paint();
+    if(!this.signedIn() || !this.supported()){ this.firstDone=true; return; }
+    if(this.noDrive){ this.firstDone=true; return; }
+    if(this.token()) this.sync('avvio'); else { this.firstDone=true; this.paint(); }
+    document.addEventListener('visibilitychange', ()=>{
+      if(document.visibilityState!=='visible' || !this.signedIn()) return;
+      if(!this.token()){ if(!document.querySelector('.modal') && !(document.activeElement && /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName))) this.renewIfNeeded(); return; }
+      if(Date.now()-this.last > 20000) this.sync('ritorno');
+    });
+    window.addEventListener('online', ()=>this.sync('rete'));
+    setInterval(()=>{ if(document.visibilityState==='visible' && this.token() && Date.now()-this.last > 85000) this.sync('controllo'); }, 30000);
+  }
+};
+GSYNC.catchRedirect();
+GSYNC.renewIfNeeded();
 </script>
 <script>
 "use strict";
@@ -3188,7 +3517,7 @@ function viewImpostazioni(){
   return `<div class="view-head"><div><h2>Impostazioni</h2></div></div>
   ${UPD.avail?`<div class="banner upd-banner"><span><b>È disponibile la versione ${esc(UPD.avail.v)}.</b> Le novità sono nella sezione Aggiornamenti.</span><button class="btn sm accent" id="upd-go2" type="button">Aggiorna ora</button></div>`:''}
   <div class="set-cols">
-    <div class="panel stack"><div class="flabel">Dove sono i tuoi dati</div><p style="margin:0">${modeText}</p><p class="small muted num" style="margin:0">${counts.map(([l,n])=>n+' '+l).join(' · ')}</p></div>
+    <div class="panel stack acct-panel" id="acct-panel">${GSYNC.panelHTML()}</div>
     <div class="panel stack"><div class="flabel">Backup</div><p style="margin:0" class="small">Esporta tutto in un file, foto comprese. Con “Importa backup” lo riapri qui, sull'app installata o su un altro dispositivo.</p>
       <div class="row"><button class="btn" id="set-exp" ${isDemo()?'disabled':''}>Esporta backup</button><button class="btn" id="set-imp">Importa backup</button><input type="file" id="set-file" accept="application/json,.json" class="hidden"></div>
       <textarea class="input hidden" id="set-out" readonly style="min-height:120px;font-size:12px"></textarea></div>
@@ -3210,7 +3539,7 @@ function viewImpostazioni(){
   </div>`;
 }
 function bindImpostazioni(v){
-  UPD.paint();
+  UPD.paint(); GSYNC.bindPanel(v);
   const g2=$('#upd-go2',v); if(g2) g2.onclick=()=>UPD.apply();
   const cl=$('#set-chlog',v); if(cl) cl.onclick=()=>{ const lines=["Diario dell'Armadio — storico delle versioni","Versione installata: "+APP_VERSION+" ("+APP_DATE+")",""]; for(const [n,t] of CHANGELOG) lines.push("Versione "+n, "  "+t, ""); saveFile('diario-armadio-versioni.txt', new Blob([lines.join('\r\n')],{type:'text/plain'}), 'Storico delle versioni salvato'); };
   const pi=$('#pwa-install',v); if(pi) pi.onclick=()=>PWA.install();
@@ -3223,7 +3552,7 @@ function bindImpostazioni(v){
   $('#set-g',v).onclick=e=>{ const b=e.target.closest('[data-g]'); if(!b) return; setGender(b.dataset.g); toast('Stile aggiornato'); };
   // le foto viaggiano dentro il backup, così si possono spostare su un altro dispositivo o sull'app installata
   const IMG_FIELDS={items:['img','imgOrig'],outfits:['photo'],logs:['selfie'],trips:[],wish:['img']};
-  const refToData=async ref=>{ if(!ref) return ref; if(ref.d) return {d:ref.d}; const src=imgSrc(ref); if(!src) return null;
+  const refToData=async ref=>{ if(!ref) return ref; if(ref.d) return {d:ref.d}; if(ref.h) return null; const src=imgSrc(ref); if(!src) return null;
     try{ const r=await fetch(src); if(!r.ok) return null; return {d:await blobToDataURL(await r.blob())}; }catch(e){ return null; } };
   $('#set-exp',v).onclick=async()=>{
     const btn=$('#set-exp',v); btn.disabled=true; const total=Object.values(R.items).length; btn.textContent='Preparo il backup…';
@@ -3377,7 +3706,9 @@ function openGenderPicker(first){
       <button class="gcard d ${g==='donna'?'on':''}" data-pick="donna"><span class="gsil">${silhouette('vestiti','beige')}</span><b>Donna</b>${sw(['#94506a','#ede6e4','#1d1d1f'])}</button>
       <button class="gcard u ${g==='uomo'?'on':''}" data-pick="uomo"><span class="gsil">${silhouette('capispalla','navy')}</span><b>Uomo</b>${sw(['#2a4862','#e2e5e8','#1d1d1f'])}</button>
     </div>
-    <div class="row" style="justify-content:center;margin-top:16px"><button class="btn ghost sm" data-pick="neutro">Preferisco lo stile neutro</button></div>`);
+    <div class="row" style="justify-content:center;margin-top:16px"><button class="btn ghost sm" data-pick="neutro">Preferisco lo stile neutro</button></div>
+    ${first && GSYNC.supported() && GSYNC.clientId() && !GSYNC.signedIn() && Store.mode==='local' ? `<div class="welcome-acct"><span class="small muted">Hai già il tuo armadio su un altro dispositivo?</span>${GSYNC.googleBtn('w-login')}</div>`:''}`);
+  const wl=$('#w-login',m); if(wl) wl.onclick=()=>GSYNC.login(false);
   $$('[data-pick]',m).forEach(b=>b.onclick=()=>{ setGender(b.dataset.pick); closeModal(m); });
 }
 Store.init().then(()=>{
@@ -3387,7 +3718,8 @@ Store.init().then(()=>{
   if(!hasReal() && lsGet('armadio-demo-off')!=='1') { D=buildDemo(); S=D; }
   else S=R;
   render();
-  if(!G()) openGenderPicker(true);
+  GSYNC.boot();
+  GSYNC.afterFirst(()=>{ if(!G()) openGenderPicker(true); });
 });
 (function(){ const ic={"statistiche": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M6 19v-7M12 19V5M18 19v-10M3.5 19.5h17\"/></svg>", "valigie": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"3.5\" y=\"7\" width=\"17\" height=\"12.5\" rx=\"2.5\"/><path d=\"M9 7V5.5c0-.8.7-1.5 1.5-1.5h3c.8 0 1.5.7 1.5 1.5V7M8 7v12.5M16 7v12.5\"/></svg>", "wishlist": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 19.5s-7.5-4.5-7.5-10A4.1 4.1 0 0 1 12 7.2a4.1 4.1 0 0 1 7.5 2.3c0 5.5-7.5 10-7.5 10Z\"/></svg>", "impostazioni": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 7h9M17 7h3M4 17h3M11 17h9\"/><circle cx=\"15\" cy=\"7\" r=\"2.2\"/><circle cx=\"9\" cy=\"17\" r=\"2.2\"/></svg>"}; const b=document.getElementById('bb-more'); if(!b) return;
   b.addEventListener('click',()=>{ const m=openModal(`<h3>Altre sezioni</h3><div class="sheet-more">${[['statistiche','Statistiche'],['valigie','Valigie'],['wishlist','Wishlist'],['impostazioni','Impostazioni']].map(([k,l])=>`<a href="#${k}" data-go-more data-v="${k}">${ic[k]}${l}</a>`).join('')}</div>`);
