@@ -106,6 +106,39 @@ h1,h2,h3{font-family:var(--display);font-weight:500;text-wrap:balance;margin:0;l
 .acct-card>div{display:flex;flex-direction:column;min-width:0}
 .acct-card>div span{overflow:hidden;text-overflow:ellipsis}
 .acct-panel code{font-size:12px;background:var(--well);padding:2px 6px;border-radius:6px;word-break:break-all}
+.entry{position:fixed;inset:0;z-index:200;background:var(--paper);display:flex;align-items:center;justify-content:center;overflow:auto;padding:calc(24px + env(safe-area-inset-top)) 20px calc(24px + env(safe-area-inset-bottom));opacity:0;transition:opacity .25s ease}
+.entry.show{opacity:1}
+.entry::before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(120% 70% at 50% -10%,color-mix(in srgb,var(--accent) 10%,transparent),transparent 60%)}
+.entry-in{position:relative;width:100%;max-width:520px;display:flex;flex-direction:column;align-items:center;text-align:center;margin:auto;transform:translateY(8px);transition:transform .35s ease}
+.entry.show .entry-in{transform:none}
+.entry-logo{width:78px;height:78px;color:var(--ink);--logo-acc:#b85a3c;margin-bottom:6px;animation:dondola 2.4s ease-in-out .3s 1;transform-origin:50% 10.8%}
+.entry-logo svg{width:100%;height:100%;display:block}
+.entry-word{font-size:clamp(40px,11vw,64px)!important;margin:4px 0 10px!important}
+.entry-sub{color:var(--muted);margin:0 0 26px;max-width:400px;font-size:16px}
+.entry-opts{display:flex;flex-direction:column;gap:12px;width:100%}
+.entry-opt{display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:16px 16px 16px 14px;border-radius:18px;border:1px solid var(--line-strong);background:var(--surface,#fff);color:var(--ink);cursor:pointer;font:inherit;box-shadow:0 1px 2px rgba(0,0,0,.04),0 10px 24px -16px rgba(0,0,0,.25);transition:transform .12s ease,border-color .15s ease,box-shadow .15s ease}
+.entry-opt:hover{border-color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.05),0 14px 30px -16px rgba(0,0,0,.3)}
+.entry-opt:active{transform:scale(.99)}
+.entry-opt.wait{opacity:.6;pointer-events:none}
+.entry-ic{flex:none;width:44px;height:44px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:var(--well);color:var(--ink)}
+#en-google .entry-ic{background:#fff;border:1px solid #dadce0}
+#en-google .entry-ic svg{width:20px;height:20px}
+.entry-tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.entry-tx b{font-size:16.5px;font-weight:650}
+.entry-tx span{font-size:13.5px;color:var(--muted);line-height:1.4}
+.entry-go{flex:none;font-size:26px;line-height:1;color:var(--muted);margin-left:2px}
+.entry-note{font-size:12.5px;color:var(--muted);margin:20px 0 0;max-width:420px}
+html.entry-open,html.entry-open body{overflow:hidden}
+.entry-keep{display:flex;align-items:center;gap:10px;align-self:flex-start;margin:-2px 0 6px 6px;font-size:13.5px;color:var(--muted);cursor:pointer;text-align:left}
+.entry-keep b{color:var(--ink);font-weight:600}
+.entry-keep input,.keep-row input{width:19px;height:19px;accent-color:var(--accent);flex:none;margin:0}
+.keep-row{display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer}
+.sheet-acct{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
+.sheet-acct .gbtn{width:100%}
+.sheet-acct-me{display:flex;align-items:center;gap:12px;min-width:0;flex:1;background:none;border:0;padding:0;color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+.sheet-acct-me img,.sheet-acct-me i{width:38px;height:38px;border-radius:50%;object-fit:cover;flex:none;border:1px solid var(--line);display:inline-flex;align-items:center;justify-content:center;font-style:normal;font-weight:600;background:var(--well)}
+.sheet-acct-me span{display:flex;flex-direction:column;min-width:0}
+.sheet-acct-me small{color:var(--muted);font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .welcome-acct{display:flex;flex-direction:column;align-items:center;gap:8px;margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
 
 .brandrow{position:relative;font-size:clamp(46px,10vw,118px);margin:20px 0 6px}
@@ -565,9 +598,11 @@ input[type=range]{accent-color:var(--accent);width:100%}
 "use strict";
 try{ const g0=localStorage.getItem('armadio-g'); if(g0) document.documentElement.dataset.g=g0; }catch(e){}
 /* ================= VERSIONE ================= */
-const APP_VERSION='3.5.1';
+const APP_VERSION='3.6.1';
 const APP_DATE='27 novembre 2026';
 const CHANGELOG=[
+  ['3.6.1','Uscire dall\'account è più facile: tocca la tua foto in alto (o il tuo nome nel menu “Altro” sul telefono) e scegli “Esci dall\'account”. Puoi uscire tenendo i capi sul dispositivo oppure toglierli (restano al sicuro sul tuo Drive); prima di toglierli l\'app salva le ultime modifiche. Dopo l\'uscita l\'app torna sempre alla schermata di accesso'],
+  ['3.6','Nuova schermata di benvenuto: alla prima apertura scegli se accedere con Google o continuare senza account, con l\'opzione “Rimani connesso” (se la togli, quando chiudi l\'app esci e il tuo armadio viene tolto dal dispositivo, restando al sicuro sul tuo Drive). Se sullo stesso dispositivo accede un altro account, l\'app chiede cosa fare con i capi che ci sono già, così nessuno si ritrova i vestiti di un altro'],
   ['3.5.1','Accesso con Google pronto all\'uso: non serve più incollare l\'ID client, basta premere “Accedi con Google” (in Impostazioni o nella schermata di benvenuto)'],
   ['3.5','Account con Google (facoltativo): accedi da Impostazioni o dalla schermata di benvenuto e capi, outfit, calendario, viaggi, wishlist e foto restano allineati da soli tra telefono e computer. I dati vanno in una cartella privata del tuo Google Drive che vede solo quest\'app. Funziona anche offline (sincronizza quando torna la rete) e, se modifichi lo stesso capo su due dispositivi, vince la modifica più recente. Senza accesso l\'app funziona come prima'],
   ['3.4','Foto con l\'AI dal telefono in un solo tocco: “Invia foto e testo a ChatGPT o Gemini” apre il menu Condividi e manda foto e testo insieme direttamente nell\'app scelta, senza copiare due cose e senza passare dal browser. Vale sia per la foto realistica dell\'outfit sia per “Rifalla con l\'AI”. Il vecchio metodo resta in “copia a mano”'],
@@ -1833,6 +1868,9 @@ const GSYNC = {
   token(){ const t=this.jget('armadio-gtoken', null); return t && t.t && t.exp > Date.now()+60000 ? t.t : null; },
   signedIn(){ return !!this.profile(); },
   needLogin(){ return lsGet('armadio-gneed')==='1'; },
+  keep(){ return lsGet('armadio-gkeep')!=='0'; },
+  newSession(){ try{ return !sessionStorage.getItem('armadio-sess'); }catch(e){ return false; } },
+  sessionOver(){ return this.signedIn() && !this.keep() && this.newSession(); },
   ready(){ return this.supported() && this.signedIn() && !!this.token() && Store.mode==='local'; },
 
   /* ---------- accesso (redirect: funziona anche nell'app installata su iPhone) ---------- */
@@ -1869,14 +1907,21 @@ const GSYNC = {
   /* rinnovo silenzioso del permesso (dura un'ora): un attimo di pagina bianca, poi si torna dove eri */
   renewIfNeeded(){
     if(!this.supported() || !this.clientId() || !this.signedIn() || this.token() || this.needLogin() || !navigator.onLine) return false;
+    if(this.sessionOver()) return false;
     if(Date.now()-(+lsGet('armadio-gsilent')||0) < 10*60e3) return false;
     this.login(true); return true;
   },
-  logout(){
+  logout(quiet, msg){
     const t=this.jget('armadio-gtoken', null);
     if(t && t.t){ try{ fetch('https://oauth2.googleapis.com/revoke?token='+encodeURIComponent(t.t), {method:'POST', mode:'no-cors'}).catch(()=>{}); }catch(e){} }
     lsSet('armadio-gtoken',''); lsSet('armadio-gprofile',''); lsSet('armadio-gneed',''); this.usage=null; this.status='';
-    setSync(Store.mode==='local'?'warn':'err', Store.mode==='local'?'Salvato solo in questo browser':'Salvataggio non disponibile'); this.paint(); toast('Sei uscito: i dati restano su questo dispositivo'); if(currentView()==='impostazioni') render();
+    setSync(Store.mode==='local'?'warn':'err', Store.mode==='local'?'Salvato solo in questo browser':'Salvataggio non disponibile'); this.paint(); toast(msg || (quiet?'Accesso annullato: non ho toccato niente':'Sei uscito: i dati restano su questo dispositivo'));
+    /* dopo l'uscita si torna sempre alla schermata di accesso */
+    lsSet('armadio-entry',''); UI.sel=null;
+    document.querySelectorAll('.modal').forEach(m=>{ try{ closeModal(m); }catch(e){} });
+    if(location.hash && location.hash!=='#armadio'){ try{ history.replaceState(null,'',location.pathname+location.search+'#armadio'); }catch(e){} }
+    if(this.entryNeeded()) this.openEntry(()=>{ if(!G()) openGenderPicker(true); });
+    scheduleRender();
   },
 
   /* ---------- Drive ---------- */
@@ -1922,7 +1967,7 @@ const GSYNC = {
       const v=JSON.stringify(R.settings[k]===undefined?null:R.settings[k]); if(v!==last[k]){ ts[k]=now; last[k]=v; ch=true; } }
     if(ch){ this.jset('armadio-sync-sts', ts); this.jset('armadio-sync-slast', last); }
   },
-  touch(){ if(!this.signedIn() || !this.supported()) return; this.dirty=true; clearTimeout(this.timer); this.timer=setTimeout(()=>this.sync('modifica'), 2500); },
+  touch(){ if(!this.signedIn() || !this.supported()) return; lsSet('armadio-gpend','1'); this.dirty=true; clearTimeout(this.timer); this.timer=setTimeout(()=>this.sync('modifica'), 2500); },
 
   /* ---------- foto ---------- */
   async hashOf(d){ const buf=await crypto.subtle.digest('SHA-256', new TextEncoder().encode(d)); return Array.from(new Uint8Array(buf)).slice(0,20).map(b=>b.toString(16).padStart(2,'0')).join(''); },
@@ -1948,6 +1993,13 @@ const GSYNC = {
     let applied=0;
     try{
       if(this.fresh || !this.profile().email){ await this.loadProfile(); }
+      const me=(this.profile()||{}).email||'', prev=lsGet('armadio-glast')||'';
+      if(me && prev && prev!==me && hasReal() && this.switchOk!==me){
+        const ch=await this.askSwitch(prev, me);
+        if(ch==='cancel'){ this.fresh=false; this.logout(true); return; }
+        if(ch==='fresh') await this.clearLocal();
+        this.switchOk=me;
+      }
       await this.hashLocal();
       /* 1 · cosa c'è sul Drive */
       const files=await this.list("name = '"+this.DATA+"'");
@@ -2019,19 +2071,69 @@ const GSYNC = {
       const old=Date.now()-2*864e5; let gc=0;
       for(const [h,f] of Object.entries(imgMap)){ if(need.has(h) || gc>=40) continue; if(f.createdTime && Date.parse(f.createdTime)<old){ gc++; this.remove(f.id).then(()=>{ delete imgMap[h]; }).catch(()=>{}); } }
       this.usage={files:Object.keys(imgMap).length, bytes:Object.values(imgMap).reduce((s,f)=>s+(+f.size||0),0)};
-      this.status='ok'; this.lastOk=Date.now(); this.err='';
+      this.status='ok'; this.lastOk=Date.now(); this.err=''; if(me) lsSet('armadio-glast', me); if(!this.dirty) lsSet('armadio-gpend','');
       if(this.fresh){ this.fresh=false; const p=this.profile(); toast((p&&p.name?'Ciao '+p.name+'! ':'')+'Armadio sincronizzato con Google Drive'); }
     }catch(e){
       console.warn('sincronizzazione', e);
       this.status = e.code==='auth' ? 'auth' : e.code==='net' ? 'offline' : e.code==='quota' ? 'quota' : 'err'; this.err=e.message||'';
-      if(e.code==='auth' && document.visibilityState==='visible' && !document.querySelector('.modal')) { this.busy=false; if(this.renewIfNeeded()) return; }
+      if(e.code==='auth' && document.visibilityState==='visible' && !document.querySelector('.modal, .entry')) { this.busy=false; if(this.renewIfNeeded()) return; }
     }finally{
       this.busy=false; this.last=Date.now(); this.progress=''; this.paint();
       if(!this.firstDone){ this.firstDone=true; const w=this.waiters; this.waiters=[]; w.forEach(f=>{ try{ f(); }catch(e){} }); }
       if(this.dirty && this.status==='ok') this.touch();
+      else if(this.endAfterSync && this.status==='ok'){ this.endAfterSync=false; this.endSession(); }
       if(currentView()==='impostazioni' && !document.querySelector('.modal')) scheduleRender();
     }
   },
+  /* un altro account su questo dispositivo: chiedo cosa fare con i capi che ci sono già */
+  askSwitch(prev, me){
+    return new Promise(res=>{ let done=false; const fin=v=>{ if(done) return; done=true; res(v); };
+      const n=Object.keys(R.items).length;
+      const m=openModal(`<h3>Account diverso</h3>
+        <p style="margin:-4px 0 12px">Su questo dispositivo c'è l'armadio di <b>${esc(prev)}</b> (${n} ${n===1?'capo':'capi'}). Hai appena fatto l'accesso come <b>${esc(me)}</b>.</p>
+        <div class="stack" style="gap:10px">
+          <button class="btn accent" id="sw-fresh" type="button">Usa solo il mio armadio di Google</button>
+          <p class="small muted" style="margin:-4px 0 4px">Tolgo da questo dispositivo i capi dell'altro account (restano al sicuro sul suo Google Drive) e carico i tuoi.</p>
+          <button class="btn" id="sw-merge" type="button">Aggiungi questi capi al mio armadio</button>
+          <button class="btn ghost" id="sw-cancel" type="button">Annulla ed esci</button>
+        </div>`, {onClose:()=>fin('cancel')});
+      $('#sw-fresh',m).onclick=()=>{ fin('fresh'); closeModal(m); };
+      $('#sw-merge',m).onclick=()=>{ fin('merge'); closeModal(m); };
+      $('#sw-cancel',m).onclick=()=>{ fin('cancel'); closeModal(m); };
+    });
+  },
+  async clearLocal(){
+    for(const [kind,key] of Object.entries(KIND)) for(const id of Object.keys(R[key])) await Store.removeRaw(kind,id);
+    lsSet('armadio-sync-dead',''); lsSet('armadio-sync-sts',''); lsSet('armadio-sync-slast','');
+    if(S!==R && !isDemo()) S=R; scheduleRender();
+  },
+
+  /* ---------- prima apertura: Google o senza account ---------- */
+  entryNeeded(){ return this.supported() && !!this.clientId() && Store.mode==='local' && !this.signedIn() && !lsGet('armadio-entry'); },
+  openEntry(then){
+    if(document.querySelector('.entry')) return;
+    const logo=(document.querySelector('.logo-mark svg')||{}).outerHTML||'';
+    const el=document.createElement('div'); el.className='entry'; el.setAttribute('role','dialog'); el.setAttribute('aria-modal','true'); el.setAttribute('aria-label','Benvenuto');
+    const user='<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8.5" r="3.8"/><path d="M4.5 20c1.2-3.6 4-5.4 7.5-5.4s6.3 1.8 7.5 5.4"/></svg>';
+    const g=this.googleBtn('x','').replace(/^<button[^>]*>/,'').replace(/<\/button>$/,'');
+    el.innerHTML=`<div class="entry-in">
+      <div class="entry-logo">${logo}</div>
+      <h1 class="wordmark entry-word">Diario <em>dell'</em>Armadio</h1>
+      <p class="entry-sub">${hasReal()?'Il tuo armadio ora può seguirti su tutti i tuoi dispositivi.':'Cataloga i tuoi capi, crea outfit e scopri quanto ti costa ogni uscita.'}</p>
+      <div class="entry-opts">
+        <button class="entry-opt" id="en-google" type="button"><span class="entry-ic">${g}</span><span class="entry-tx"><b>Accedi con Google</b><span>Ritrovi capi, outfit e foto su telefono e computer, sempre allineati da soli.</span></span><span class="entry-go">›</span></button>
+        <label class="entry-keep"><input type="checkbox" id="en-keep" ${this.keep()?'checked':''}><span><b>Rimani connesso</b> · non ti chiedo più di accedere su questo dispositivo</span></label>
+        <button class="entry-opt" id="en-local" type="button"><span class="entry-ic">${user}</span><span class="entry-tx"><b>Continua senza account</b><span>I dati restano solo su questo dispositivo. Puoi accedere quando vuoi da Impostazioni.</span></span><span class="entry-go">›</span></button>
+      </div>
+      <p class="entry-note">Con Google i dati vanno in una cartella privata del tuo Drive che vede solo quest'app. Non pubblichiamo e non leggiamo nient'altro.</p>
+    </div>`;
+    document.body.appendChild(el); document.documentElement.classList.add('entry-open');
+    requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.add('show')));
+    const close=()=>{ el.classList.remove('show'); setTimeout(()=>{ el.remove(); document.documentElement.classList.remove('entry-open'); if(then) then(); }, 260); };
+    $('#en-google',el).onclick=()=>{ lsSet('armadio-gkeep', $('#en-keep',el).checked?'1':'0'); $('#en-google',el).classList.add('wait'); this.login(false); };
+    $('#en-local',el).onclick=()=>{ lsSet('armadio-entry','local'); close(); };
+  },
+
   /* chiama fn dopo il primo giro di sincronizzazione (o subito, se non c'è niente da sincronizzare) */
   afterFirst(fn){ if(this.firstDone || !this.ready()) fn(); else this.waiters.push(fn); },
 
@@ -2059,6 +2161,17 @@ const GSYNC = {
       else { a.innerHTML=this.supported()&&this.clientId()?'Accedi':''; a.title='Accedi con Google'; a.classList.remove('in'); } }
     const box=$('#acct-status'); if(box && s) box.innerHTML=`<span class="sync ${s[0]}">${esc(s[2])}</span>`+(this.lastOk&&this.status!=='busy'?` <span class="muted">· ultimo controllo alle ${new Date(this.lastOk).toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'})}</span>`:'');
   },
+  sheetRow(){
+    if(!this.supported() || Store.mode!=='local' || !this.clientId()) return '';
+    const p=this.profile();
+    if(!p) return `<div class="sheet-acct">${this.googleBtn('sm-login')}</div>`;
+    return `<div class="sheet-acct"><button class="sheet-acct-me" id="sm-acct" type="button">${p.pic?`<img src="${esc(p.pic)}" alt="" referrerpolicy="no-referrer">`:`<i>${esc((p.name||p.email||'?').charAt(0).toUpperCase())}</i>`}<span><b>${esc(p.name||p.full||'Account')}</b><small>${esc(p.email||'')}</small></span></button><button class="btn sm danger" id="sm-out" type="button">Esci</button></div>`;
+  },
+  bindSheetRow(m, close){
+    const l=$('#sm-login',m); if(l) l.onclick=()=>{ close(); this.login(false); };
+    const a=$('#sm-acct',m); if(a) a.onclick=()=>{ close(); this.openAccount(); };
+    const o=$('#sm-out',m); if(o) o.onclick=()=>{ close(); this.askLogout(); };
+  },
   googleBtn(id, label='Accedi con Google'){ return `<button class="btn gbtn" id="${id}" type="button"><svg viewBox="0 0 48 48" width="18" height="18" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.6 5.4 2.7 13.3l7.9 6.1C12.5 13.6 17.8 9.5 24 9.5z"/><path fill="#4285F4" d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.4c-.5 2.9-2.2 5.3-4.6 6.9l7.4 5.7c4.3-4 6.9-9.9 6.9-17.1z"/><path fill="#FBBC05" d="M10.6 28.6c-.5-1.4-.8-2.9-.8-4.6s.3-3.2.8-4.6l-7.9-6.1C1 16.6 0 20.2 0 24s1 7.4 2.7 10.7l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.4-5.7c-2.1 1.4-4.8 2.3-8.5 2.3-6.2 0-11.5-4.1-13.4-9.9l-7.9 6.1C6.6 42.6 14.6 48 24 48z"/></svg>${label}</button>`; },
   panelHTML(){
     const counts=[['capi',Object.keys(R.items).length],['outfit',Object.keys(R.outfits).length],['giorni',Object.keys(R.logs).length],['viaggi',Object.keys(R.trips).length],['desideri',Object.keys(R.wish).length]];
@@ -2072,6 +2185,7 @@ const GSYNC = {
     const p=this.profile();
     if(!p) return `<div class="flabel">Account</div><p style="margin:0">Accedi con Google per ritrovare capi, outfit e foto su <b>tutti i tuoi dispositivi</b>: telefono e computer restano sempre allineati, da soli.</p>
       <div class="row">${this.googleBtn('g-login')}</div>
+      <label class="keep-row"><input type="checkbox" id="g-keep" ${this.keep()?'checked':''}> Rimani connesso su questo dispositivo</label>
       <p class="small muted" style="margin:0">I dati vanno in una cartella privata del tuo Google Drive che vede solo quest'app (non compare tra i tuoi file). Senza accesso l'app funziona lo stesso, con i dati solo qui.</p>${cnt}`;
     const u=this.usage; const mb=u?(u.bytes/1048576):0;
     return `<div class="flabel">Account</div>
@@ -2079,23 +2193,78 @@ const GSYNC = {
       ${this.needLogin()?`<div class="banner" style="margin:0"><span>Google chiede di accedere di nuovo per continuare a sincronizzare.</span>${this.googleBtn('g-relogin','Accedi di nuovo')}</div>`:''}
       <div class="small" id="acct-status"></div>
       ${u?`<p class="small muted num" style="margin:0">Sul tuo Drive: ${u.files} foto · ${mb<1?Math.max(0.1,mb).toFixed(1):Math.round(mb)} MB</p>`:''}
-      <div class="row"><button class="btn" id="g-sync" type="button">Sincronizza ora</button><button class="btn ghost" id="g-logout" type="button">Esci</button></div>${cnt}`;
+      <div class="row"><button class="btn" id="g-sync" type="button">Sincronizza ora</button><button class="btn danger" id="g-logout" type="button">Esci dall'account</button></div>
+      <label class="keep-row"><input type="checkbox" id="g-keep" ${this.keep()?'checked':''}> Rimani connesso su questo dispositivo</label>
+      <p class="small muted" style="margin:-6px 0 0" id="g-keep-note">${this.keep()?'Non ti chiedo più di accedere.':'Quando chiudi l\'app esci e il tuo armadio viene tolto da questo dispositivo (resta sul tuo Drive).'}</p>${cnt}`;
   },
   bindPanel(v){
     const s=$('#g-cid-save',v); if(s) s.onclick=()=>{ const val=$('#g-cid',v).value.trim(); if(!/\.apps\.googleusercontent\.com$/.test(val)){ toast('L\'ID client finisce con .apps.googleusercontent.com'); return; } lsSet('armadio-gclient', val); render(); toast('Accesso con Google attivato'); };
-    const l=$('#g-login',v); if(l) l.onclick=()=>this.login(false);
+    const l=$('#g-login',v); if(l) l.onclick=()=>{ const k=$('#g-keep',v); if(k) lsSet('armadio-gkeep', k.checked?'1':'0'); this.login(false); };
+    const kp=$('#g-keep',v); if(kp && this.signedIn()) kp.onchange=()=>{ lsSet('armadio-gkeep', kp.checked?'1':'0'); const n=$('#g-keep-note',v); if(n) n.textContent=kp.checked?'Non ti chiedo più di accedere.':'Quando chiudi l\'app esci e il tuo armadio viene tolto da questo dispositivo (resta sul tuo Drive).'; toast(kp.checked?'Rimani connesso':'Uscirai quando chiudi l\'app'); };
     const rl=$('#g-relogin',v); if(rl) rl.onclick=()=>{ lsSet('armadio-gneed',''); this.login(false); };
     const sy=$('#g-sync',v); if(sy) sy.onclick=()=>{ if(!this.token()){ lsSet('armadio-gsilent',''); if(!this.renewIfNeeded()) this.login(false); return; } this.sync('manuale'); };
-    const lo=$('#g-logout',v); if(lo) lo.onclick=async()=>{ if(await askConfirm('Uscire dall\'account? I dati restano su questo dispositivo, ma smettono di sincronizzarsi.','Esci')) this.logout(); };
+    const lo=$('#g-logout',v); if(lo) lo.onclick=()=>this.askLogout();
     this.paint();
   },
+  /* esci: tieni i capi qui oppure toglili (restano sul Drive) */
+  askLogout(){
+    const p=this.profile()||{}; const n=Object.keys(R.items).length;
+    const m=openModal(`<h3>Esci dall'account</h3>
+      <p style="margin:-4px 0 14px">Stai per uscire da <b>${esc(p.email||'Google')}</b>. Il tuo armadio resta al sicuro sul tuo Google Drive: lo ritrovi appena accedi di nuovo.</p>
+      <div class="stack" style="gap:10px">
+        <button class="btn accent" id="lo-clear" type="button">Esci e togli i capi da questo dispositivo</button>
+        <p class="small muted" style="margin:-4px 0 4px">Consigliato se il dispositivo non è tuo o lo usano anche altri.</p>
+        <button class="btn" id="lo-keep" type="button">Esci e tieni i capi qui (${n} ${n===1?'capo':'capi'})</button>
+        <p class="small muted" style="margin:-4px 0 4px">Restano visibili su questo dispositivo, ma non si sincronizzano più.</p>
+        <button class="btn ghost" id="lo-no" type="button">Annulla</button>
+      </div>`);
+    $('#lo-no',m).onclick=()=>closeModal(m);
+    $('#lo-keep',m).onclick=()=>{ closeModal(m); this.logout(); };
+    $('#lo-clear',m).onclick=async()=>{
+      const b=$('#lo-clear',m);
+      if(lsGet('armadio-gpend')==='1' || this.dirty){
+        if(!navigator.onLine || !this.token()){ toast('Ci sono modifiche non ancora salvate sul Drive: collegati a internet e riprova, oppure esci tenendo i capi qui'); return; }
+        b.disabled=true; b.textContent='Salvo le ultime modifiche sul Drive…'; clearTimeout(this.timer); this.dirty=true;
+        while(this.busy) await new Promise(r=>setTimeout(r,200));
+        await this.sync('uscita');
+        if(this.status!=='ok' || lsGet('armadio-gpend')==='1'){ b.disabled=false; b.textContent='Esci e togli i capi da questo dispositivo'; toast('Non sono riuscito a salvare le ultime modifiche: riprova tra poco'); return; }
+      }
+      closeModal(m); this.endSession('Sei uscito: il tuo armadio è al sicuro sul tuo Google Drive');
+    };
+  },
+  /* riquadro account aperto toccando la tua foto in alto */
+  openAccount(){
+    const p=this.profile(); if(!p){ location.hash='impostazioni'; return; }
+    const s=this.statusText()||['ok','',''];
+    const m=openModal(`<div class="acct-card" style="margin:2px 0 14px">${p.pic?`<img src="${esc(p.pic)}" alt="" referrerpolicy="no-referrer">`:`<i>${esc((p.name||p.email||'?').charAt(0).toUpperCase())}</i>`}<div><b>${esc(p.full||p.name||'Account Google')}</b><span class="small muted">${esc(p.email||'')}</span></div></div>
+      <p class="small" style="margin:0 0 14px"><span class="sync ${s[0]}">${esc(s[2])}</span></p>
+      <div class="stack" style="gap:10px"><button class="btn" id="am-sync" type="button">Sincronizza ora</button><button class="btn" id="am-set" type="button">Impostazioni account</button><button class="btn danger" id="am-out" type="button">Esci dall'account</button></div>`);
+    $('#am-sync',m).onclick=()=>{ closeModal(m); if(!this.token()){ lsSet('armadio-gsilent',''); if(!this.renewIfNeeded()) this.login(false); return; } this.sync('manuale'); toast('Sincronizzo…'); };
+    $('#am-set',m).onclick=()=>{ closeModal(m); location.hash='impostazioni'; setTimeout(()=>{ const a=$('#acct-panel'); if(a) a.scrollIntoView({behavior:'smooth',block:'start'}); },120); };
+    $('#am-out',m).onclick=()=>{ closeModal(m); this.askLogout(); };
+  },
+  /* "Rimani connesso" tolto: alla nuova apertura esco e tolgo l'armadio da questo dispositivo (resta sul Drive) */
+  endSession(msg){
+    for(const [kind,key] of Object.entries(KIND)) for(const id of Object.keys(R[key])) Store.removeRaw(kind,id);
+    lsSet('armadio-sync-dead',''); lsSet('armadio-sync-sts',''); lsSet('armadio-sync-slast',''); lsSet('armadio-gpend',''); lsSet('armadio-entry','');
+    if(!isDemo()) S=R;
+    this.logout(true, msg || 'Sessione chiusa: accedi di nuovo per ritrovare il tuo armadio');
+  },
   boot(){
+    const over=this.sessionOver();
+    try{ sessionStorage.setItem('armadio-sess','1'); }catch(e){}
+    if(over){
+      if(lsGet('armadio-gpend')==='1' && this.token() && navigator.onLine){ this.endAfterSync=true; }   /* prima mando le ultime modifiche */
+      else { this.endSession(); this.firstDone=true; return; }
+    }
     if(this.flash){ setTimeout(()=>toast(this.flash), 400); }
+    const ac=$('#acct'); if(ac) ac.addEventListener('click', e=>{ if(this.signedIn()){ e.preventDefault(); this.openAccount(); } });
     const sy=$('#sync'); if(sy) sy.addEventListener('click', ()=>{ if(!this.signedIn()) return;
       if(!this.token() && !this.needLogin()){ lsSet('armadio-gsilent',''); if(this.renewIfNeeded()) return; }
       location.hash='impostazioni'; });
     this.paint();
     if(!this.signedIn() || !this.supported()){ this.firstDone=true; return; }
+    lsSet('armadio-entry','google');
     if(this.noDrive){ this.firstDone=true; return; }
     if(this.token()) this.sync('avvio'); else { this.firstDone=true; this.paint(); }
     document.addEventListener('visibilitychange', ()=>{
@@ -3708,7 +3877,7 @@ function openGenderPicker(first){
       <button class="gcard u ${g==='uomo'?'on':''}" data-pick="uomo"><span class="gsil">${silhouette('capispalla','navy')}</span><b>Uomo</b>${sw(['#2a4862','#e2e5e8','#1d1d1f'])}</button>
     </div>
     <div class="row" style="justify-content:center;margin-top:16px"><button class="btn ghost sm" data-pick="neutro">Preferisco lo stile neutro</button></div>
-    ${first && GSYNC.supported() && GSYNC.clientId() && !GSYNC.signedIn() && Store.mode==='local' ? `<div class="welcome-acct"><span class="small muted">Hai già il tuo armadio su un altro dispositivo?</span>${GSYNC.googleBtn('w-login')}</div>`:''}`);
+    ${first && GSYNC.supported() && GSYNC.clientId() && !GSYNC.signedIn() && Store.mode==='local' && !lsGet('armadio-entry') ? `<div class="welcome-acct"><span class="small muted">Hai già il tuo armadio su un altro dispositivo?</span>${GSYNC.googleBtn('w-login')}</div>`:''}`);
   const wl=$('#w-login',m); if(wl) wl.onclick=()=>GSYNC.login(false);
   $$('[data-pick]',m).forEach(b=>b.onclick=()=>{ setGender(b.dataset.pick); closeModal(m); });
 }
@@ -3720,11 +3889,12 @@ Store.init().then(()=>{
   else S=R;
   render();
   GSYNC.boot();
-  GSYNC.afterFirst(()=>{ if(!G()) openGenderPicker(true); });
+  const afterEntry=()=>GSYNC.afterFirst(()=>{ if(!G()) openGenderPicker(true); });
+  if(GSYNC.entryNeeded()) GSYNC.openEntry(afterEntry); else afterEntry();
 });
 (function(){ const ic={"statistiche": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M6 19v-7M12 19V5M18 19v-10M3.5 19.5h17\"/></svg>", "valigie": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"3.5\" y=\"7\" width=\"17\" height=\"12.5\" rx=\"2.5\"/><path d=\"M9 7V5.5c0-.8.7-1.5 1.5-1.5h3c.8 0 1.5.7 1.5 1.5V7M8 7v12.5M16 7v12.5\"/></svg>", "wishlist": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 19.5s-7.5-4.5-7.5-10A4.1 4.1 0 0 1 12 7.2a4.1 4.1 0 0 1 7.5 2.3c0 5.5-7.5 10-7.5 10Z\"/></svg>", "impostazioni": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 7h9M17 7h3M4 17h3M11 17h9\"/><circle cx=\"15\" cy=\"7\" r=\"2.2\"/><circle cx=\"9\" cy=\"17\" r=\"2.2\"/></svg>"}; const b=document.getElementById('bb-more'); if(!b) return;
-  b.addEventListener('click',()=>{ const m=openModal(`<h3>Altre sezioni</h3><div class="sheet-more">${[['statistiche','Statistiche'],['valigie','Valigie'],['wishlist','Wishlist'],['impostazioni','Impostazioni']].map(([k,l])=>`<a href="#${k}" data-go-more data-v="${k}">${ic[k]}${l}</a>`).join('')}</div>`);
-    $$('[data-go-more]',m).forEach(a=>a.addEventListener('click',()=>closeModal(m))); }); })();
+  b.addEventListener('click',()=>{ const m=openModal(`<h3>Altre sezioni</h3><div class="sheet-more">${[['statistiche','Statistiche'],['valigie','Valigie'],['wishlist','Wishlist'],['impostazioni','Impostazioni']].map(([k,l])=>`<a href="#${k}" data-go-more data-v="${k}">${ic[k]}${l}</a>`).join('')}</div>${GSYNC.sheetRow()}`);
+    $$('[data-go-more]',m).forEach(a=>a.addEventListener('click',()=>closeModal(m))); GSYNC.bindSheetRow(m, ()=>closeModal(m)); }); })();
 /* Salva un file sul dispositivo: dentro Claude passa dal sistema di download di Claude, altrimenti scarica direttamente */
 async function saveFile(name, blob, okMsg){
   if(Store.downloads){
