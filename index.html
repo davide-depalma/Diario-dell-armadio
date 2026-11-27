@@ -111,6 +111,15 @@ nav.tabs a:hover{color:var(--ink);background:color-mix(in srgb,var(--ink) 5%,tra
 nav.tabs a.on{color:var(--on-accent);background:var(--accent)}
 nav.tabs a.on svg{opacity:1}
 .bottombar{display:none}
+/* Avviso aggiornamento sull'icona Impostazioni */
+nav.tabs a[data-v="impostazioni"],.bottombar #bb-more,.sheet-more a[data-v="impostazioni"]{position:relative}
+body.has-update nav.tabs a[data-v="impostazioni"]::after,body.has-update .bottombar #bb-more::after,body.has-update .sheet-more a[data-v="impostazioni"]::after{content:"1";position:absolute;top:-5px;right:-5px;min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:#d4402b;color:#fff;font-size:10.5px;font-weight:700;line-height:17px;text-align:center;box-shadow:0 0 0 2px var(--paper);letter-spacing:0}
+body.has-update .bottombar #bb-more::after{top:1px;right:calc(50% - 31px)}
+body.has-update .sheet-more a[data-v="impostazioni"]::after{top:10px;right:10px}
+.upd-new{display:flex;gap:12px;align-items:flex-start}.upd-new b{font-size:16px}
+.upd-dot{width:10px;height:10px;border-radius:50%;background:#d4402b;margin-top:6px;flex:none;box-shadow:0 0 0 4px color-mix(in srgb,#d4402b 22%,transparent)}
+body.has-update .upd-panel{border-color:color-mix(in srgb,#d4402b 45%,var(--line));box-shadow:0 0 0 3px color-mix(in srgb,#d4402b 12%,transparent),var(--shadow-sm)}
+.upd-banner{text-decoration:none;border-left-color:#d4402b}
 
 main.wrap{padding-top:30px;padding-bottom:110px;animation:viewin .35s var(--ease)}
 @keyframes viewin{from{opacity:.0;transform:translateY(6px)}to{opacity:1;transform:none}}
@@ -524,9 +533,10 @@ input[type=range]{accent-color:var(--accent);width:100%}
 "use strict";
 try{ const g0=localStorage.getItem('armadio-g'); if(g0) document.documentElement.dataset.g=g0; }catch(e){}
 /* ================= VERSIONE ================= */
-const APP_VERSION='3.1.4';
-const APP_DATE='25 novembre 2026';
+const APP_VERSION='3.2';
+const APP_DATE='27 novembre 2026';
 const CHANGELOG=[
+  ['3.2','Aggiornamenti: quando esce una versione nuova compare un avviso su Impostazioni; nella nuova sezione “Aggiornamenti” vedi le novità e aggiorni con “Aggiorna ora”. La sezione Versione ora è corta e lo storico completo si scarica come file .txt'],
   ['3.1.4','Telefono: cartellini dei capi che si vedono interi anche su iPhone; tolto “Tutti” anche nella scelta dei capi e negli Outfit (tocca di nuovo la categoria per vederli tutti)'],
   ['3.1.3','“Esporta backup” salva direttamente il file .json (con le foto), senza doverlo creare a mano'],
   ['3.1.2','App installata: identità separata dalle altre app sullo stesso sito (es. RailOps Hub) e aggiornamenti del nome e dell\'icona sempre presi da internet'],
@@ -1198,6 +1208,69 @@ function mountPicker(el, selected, onChange, opts={}){
     b.classList.toggle('sel', selected.has(id)); b.setAttribute('aria-pressed', selected.has(id)); onChange && onChange(); });
   el._redraw=draw; draw();
 }
+/* ===== Aggiornamenti: l'app controlla se su internet c'è una versione nuova e la installa quando premi "Aggiorna ora" ===== */
+const UPD={ reg:null, avail:null, checking:false, last:0, err:'',
+  enabled(){ return 'serviceWorker' in navigator && location.protocol.startsWith('http') && !/claudeusercontent|claude\.ai/.test(location.host); },
+  cmp(a,b){ const x=String(a).split('.').map(Number), y=String(b).split('.').map(Number); for(let i=0;i<Math.max(x.length,y.length);i++){ const d=(x[i]||0)-(y[i]||0); if(d) return d; } return 0; },
+  async check(manual){
+    if(!this.enabled() || this.checking) return; this.checking=true; this.err=''; this.paint();
+    try{
+      const r=await fetch('index.html?controlla='+Date.now(),{cache:'no-store'}); if(!r.ok) throw new Error('HTTP '+r.status);
+      const html=await r.text(); const v=(html.match(/APP_VERSION='([^']+)'/)||[])[1];
+      const notes=[...html.matchAll(/\['([\d.]+)','((?:[^'\\]|\\.)*)'\]/g)].map(m=>[m[1],m[2].replace(/\\'/g,"'")]).filter(([n])=>this.cmp(n,APP_VERSION)>0).slice(0,6);
+      this.avail = v && this.cmp(v,APP_VERSION)>0 ? {v, notes} : null;
+      this.last=Date.now();
+      if(manual) toast(this.avail?`Disponibile la versione ${v}`:'Hai già la versione più recente');
+    }catch(e){ this.err = navigator.onLine===false ? 'Sei senza internet: riprova quando sei connesso.' : 'Non riesco a controllare adesso: riprova tra poco.'; if(manual) toast(this.err); }
+    this.checking=false; this.paint();
+  },
+  async apply(){
+    const sw=navigator.serviceWorker && navigator.serviceWorker.controller;
+    const btn=$('#upd-go'); if(btn){ btn.disabled=true; btn.textContent='Aggiorno…'; }
+    if(!sw){ location.reload(); return; }
+    const res=await new Promise(res=>{ const ch=new MessageChannel(); const t=setTimeout(()=>res({ok:false,error:'timeout'}),20000); ch.port1.onmessage=e=>{ clearTimeout(t); res(e.data); }; sw.postMessage({type:'aggiorna'},[ch.port2]); });
+    if(res && res.ok){ lsSet('armadio-updated-from',APP_VERSION); location.reload(); }
+    else { toast('Aggiornamento non riuscito: controlla la connessione e riprova.'); if(btn){ btn.disabled=false; btn.textContent='Aggiorna ora'; } }
+  },
+  paint(){
+    document.body.classList.toggle('has-update', !!this.avail);
+    const box=$('#upd-box'); if(box) box.innerHTML=updPanelInner();
+    const b=$('#upd-check'); if(b) b.onclick=()=>UPD.check(true); const g=$('#upd-go'); if(g) g.onclick=()=>UPD.apply();
+  }
+};
+function updPanelInner(){
+  if(!UPD.enabled()) return `<p style="margin:0" class="small muted">Qui l'app si aggiorna da sola: ogni volta che la apri trovi l'ultima versione.</p>`;
+  const a=UPD.avail;
+  if(a) return `<div class="upd-new"><span class="upd-dot"></span><div><b>Nuova versione ${esc(a.v)} disponibile</b><span class="small muted"> · tu hai la ${esc(APP_VERSION)}</span></div></div>
+    ${a.notes.length?`<ul class="chlog">${a.notes.map(([n,t])=>`<li><b>${esc(n)}</b> ${esc(t)}</li>`).join('')}</ul>`:''}
+    <div class="row"><button class="btn accent" id="upd-go" type="button">Aggiorna ora</button><span class="small muted">I tuoi capi e i tuoi outfit restano dove sono.</span></div>`;
+  return `<p style="margin:0">Hai la versione più recente: <b>${esc(APP_VERSION)}</b>.</p>
+    <div class="row"><button class="btn" id="upd-check" type="button" ${UPD.checking?'disabled':''}>${UPD.checking?'Controllo…':'Controlla aggiornamenti'}</button>
+    <span class="small muted">${UPD.err?esc(UPD.err):UPD.last?'Ultimo controllo: '+new Date(UPD.last).toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'}):''}</span></div>`;
+}
+if(UPD.enabled()){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('sw.js').then(reg=>{ UPD.reg=reg; }).catch(()=>{});
+    setTimeout(()=>UPD.check(false),1500);
+    const from=lsGet('armadio-updated-from'); if(from && from!==APP_VERSION){ lsSet('armadio-updated-from',''); setTimeout(()=>toast(`App aggiornata alla versione ${APP_VERSION}`),600); }
+  });
+  // ricontrollo quando torni sull'app (al massimo ogni 30 minuti)
+  document.addEventListener('visibilitychange',()=>{ if(!document.hidden && Date.now()-UPD.last>30*60e3) UPD.check(false); });
+}
+/* ===== App installabile (PWA) ===== */
+const PWA={ evt:null,
+  installed(){ return (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone===true; },
+  ios(){ return /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1); },
+  async install(){
+    if(this.evt){ this.evt.prompt(); const r=await this.evt.userChoice.catch(()=>null); this.evt=null; if(r&&r.outcome==='accepted') toast('App installata'); return; }
+    const steps = this.ios()
+      ? '<ol class="stack" style="margin:0;padding-left:20px"><li>Apri questa pagina con <b>Safari</b>.</li><li>Tocca <b>Condividi</b> (il quadrato con la freccia in su).</li><li>Scegli <b>Aggiungi alla schermata Home</b> e poi <b>Aggiungi</b>.</li></ol>'
+      : '<ol class="stack" style="margin:0;padding-left:20px"><li>Apri il menu del browser (i tre puntini in alto a destra).</li><li>Scegli <b>Installa app</b> oppure <b>Aggiungi a schermata Home</b>.</li><li>Conferma con <b>Installa</b>.</li></ol>';
+    openModal(`<h3>Installa l'app</h3><p class="muted" style="margin:-6px 0 14px">Avrai l'icona del Diario sulla schermata Home e si aprirà a schermo intero, anche senza internet.</p>${steps}`);
+  }
+};
+window.addEventListener('beforeinstallprompt',e=>{ e.preventDefault(); PWA.evt=e; });
+window.addEventListener('appinstalled',()=>{ PWA.evt=null; toast('App installata: la trovi tra le tue app'); });
 </script>
 <script>
 "use strict";
@@ -3142,6 +3215,7 @@ function viewImpostazioni(){
   const modeText={cloud:'I tuoi dati sono salvati nel cloud, in uno spazio privato visibile solo a te: li ritrovi da qualsiasi dispositivo in cui apri questa pagina.',local:'I dati sono salvati solo in questo browser. Esporta un backup di tanto in tanto.',memory:'Il salvataggio non è disponibile: esporta un backup prima di chiudere la pagina.'}[Store.mode];
   const counts=[['capi',Object.keys(R.items).length],['outfit',Object.keys(R.outfits).length],['giorni',Object.keys(R.logs).length],['viaggi',Object.keys(R.trips).length],['desideri',Object.keys(R.wish).length]];
   return `<div class="view-head"><div><h2>Impostazioni</h2></div></div>
+  ${UPD.avail?`<div class="banner upd-banner"><span><b>È disponibile la versione ${esc(UPD.avail.v)}.</b> Le novità sono nella sezione Aggiornamenti.</span><button class="btn sm accent" id="upd-go2" type="button">Aggiorna ora</button></div>`:''}
   <div class="cols2"><div class="stack">
     <div class="panel stack"><div class="flabel">Dove sono i tuoi dati</div><p style="margin:0">${modeText}</p><p class="small muted num" style="margin:0">${counts.map(([l,n])=>n+' '+l).join(' · ')}</p></div>
     <div class="panel stack"><div class="flabel">Stile dell'app</div><div class="chips" id="set-g">${[['donna','Donna'],['uomo','Uomo'],['neutro','Neutro']].map(([v,l])=>`<button class="chip ${(G()||'neutro')===v?'on':''}" data-g="${v}">${l}</button>`).join('')}</div><p class="small muted" style="margin:0">Cambia colori e caratteri, le categorie mostrate, l'armadio di esempio e le ricerche su Pinterest.</p></div>
@@ -3151,17 +3225,22 @@ function viewImpostazioni(){
     <div class="panel stack"><div class="flabel">Backup</div><p style="margin:0" class="small">Esporta tutto in un file, foto comprese. Con “Importa backup” lo riapri qui, sull'app installata o su un altro dispositivo.</p>
       <div class="row"><button class="btn" id="set-exp" ${isDemo()?'disabled':''}>Esporta backup</button><button class="btn" id="set-imp">Importa backup</button><input type="file" id="set-file" accept="application/json,.json" class="hidden"></div>
       <textarea class="input hidden" id="set-out" readonly style="min-height:120px;font-size:12px"></textarea></div>
+    <div class="panel stack upd-panel" id="upd-panel"><div class="flabel">Aggiornamenti</div><div class="stack" id="upd-box" style="gap:12px">${updPanelInner()}</div></div>
     <div class="panel stack ${location.protocol.startsWith('http')&&!/claudeusercontent|claude\.ai/.test(location.host)?'':'hidden'}" id="pwa-panel"><div class="flabel">App sul telefono e sul computer</div>
       <p style="margin:0" class="small muted" id="pwa-txt">${PWA.installed()?'Stai usando l\'app installata: si apre a schermo intero e funziona anche senza internet.':'Installala: avrai l\'icona sulla schermata Home, si apre a schermo intero e funziona anche senza internet.'}</p>
       <div class="row"><button class="btn accent ${PWA.installed()?'hidden':''}" id="pwa-install" type="button">Installa l'app</button><span class="small muted" id="pwa-off"></span></div></div>
     <div class="panel stack"><div class="flabel">Ritaglio preciso (AI)</div><p style="margin:0" class="small muted">Se il ritaglio preciso non parte, premi qui: provo il ritaglio su una foto di esempio e ti mostro cosa succede.</p>
       <div class="row"><button class="btn" id="ai-test" type="button">Verifica il ritaglio preciso</button></div><pre id="ai-log" class="small" style="white-space:pre-wrap;margin:0;max-height:260px;overflow:auto;${AI.log.length?'':'display:none'}">${esc(AI.log.join('\n'))}</pre></div>
     <div class="panel stack"><div class="flabel">Versione</div><p style="margin:0"><b>Diario dell'Armadio ${APP_VERSION}</b> <span class="muted small">· ${APP_DATE}</span></p>
-      <ul class="chlog">${CHANGELOG.map(([v,t])=>`<li><b>${v}</b>${esc(t)}</li>`).join('')}</ul></div>
+      <p style="margin:0" class="small"><span class="muted">Novità di questa versione:</span> ${esc((CHANGELOG[0]||['',''])[1])}</p>
+      <div class="row"><button class="btn sm" id="set-chlog" type="button">Scarica lo storico delle versioni (.txt)</button><span class="small muted num">${CHANGELOG.length} versioni</span></div></div>
     <div class="panel stack"><div class="flabel">Zona pericolosa</div><p style="margin:0" class="small">Elimina definitivamente capi, outfit, calendario, valigie e wishlist.</p><div class="row"><button class="btn danger" id="set-wipe" ${isDemo()||!hasReal()?'disabled':''}>Cancella tutto</button></div></div>
   </div></div>`;
 }
 function bindImpostazioni(v){
+  UPD.paint();
+  const g2=$('#upd-go2',v); if(g2) g2.onclick=()=>UPD.apply();
+  const cl=$('#set-chlog',v); if(cl) cl.onclick=()=>{ const lines=["Diario dell'Armadio — storico delle versioni","Versione installata: "+APP_VERSION+" ("+APP_DATE+")",""]; for(const [n,t] of CHANGELOG) lines.push("Versione "+n, "  "+t, ""); saveFile('diario-armadio-versioni.txt', new Blob([lines.join('\r\n')],{type:'text/plain'}), 'Storico delle versioni salvato'); };
   const pi=$('#pwa-install',v); if(pi) pi.onclick=()=>PWA.install();
   if($('#pwa-off',v) && navigator.serviceWorker && navigator.serviceWorker.controller) $('#pwa-off',v).textContent='✓ Pronta anche senza internet';
   const at=$('#ai-test',v); if(at) at.onclick=async()=>{ const lg=$('#ai-log',v); at.disabled=true; at.textContent='Verifica in corso… (la prima volta scarica il modello)'; lg.style.display='';
@@ -3339,29 +3418,8 @@ Store.init().then(()=>{
   if(!G()) openGenderPicker(true);
 });
 (function(){ const ic={"statistiche": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M6 19v-7M12 19V5M18 19v-10M3.5 19.5h17\"/></svg>", "valigie": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"3.5\" y=\"7\" width=\"17\" height=\"12.5\" rx=\"2.5\"/><path d=\"M9 7V5.5c0-.8.7-1.5 1.5-1.5h3c.8 0 1.5.7 1.5 1.5V7M8 7v12.5M16 7v12.5\"/></svg>", "wishlist": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 19.5s-7.5-4.5-7.5-10A4.1 4.1 0 0 1 12 7.2a4.1 4.1 0 0 1 7.5 2.3c0 5.5-7.5 10-7.5 10Z\"/></svg>", "impostazioni": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 7h9M17 7h3M4 17h3M11 17h9\"/><circle cx=\"15\" cy=\"7\" r=\"2.2\"/><circle cx=\"9\" cy=\"17\" r=\"2.2\"/></svg>"}; const b=document.getElementById('bb-more'); if(!b) return;
-  b.addEventListener('click',()=>{ const m=openModal(`<h3>Altre sezioni</h3><div class="sheet-more">${[['statistiche','Statistiche'],['valigie','Valigie'],['wishlist','Wishlist'],['impostazioni','Impostazioni']].map(([k,l])=>`<a href="#${k}" data-go-more>${ic[k]}${l}</a>`).join('')}</div>`);
+  b.addEventListener('click',()=>{ const m=openModal(`<h3>Altre sezioni</h3><div class="sheet-more">${[['statistiche','Statistiche'],['valigie','Valigie'],['wishlist','Wishlist'],['impostazioni','Impostazioni']].map(([k,l])=>`<a href="#${k}" data-go-more data-v="${k}">${ic[k]}${l}</a>`).join('')}</div>`);
     $$('[data-go-more]',m).forEach(a=>a.addEventListener('click',()=>closeModal(m))); }); })();
-/* ===== App installabile (PWA) ===== */
-const PWA={ evt:null,
-  installed(){ return (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone===true; },
-  ios(){ return /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1); },
-  async install(){
-    if(this.evt){ this.evt.prompt(); const r=await this.evt.userChoice.catch(()=>null); this.evt=null; if(r&&r.outcome==='accepted') toast('App installata'); return; }
-    const steps = this.ios()
-      ? '<ol class="stack" style="margin:0;padding-left:20px"><li>Apri questa pagina con <b>Safari</b>.</li><li>Tocca <b>Condividi</b> (il quadrato con la freccia in su).</li><li>Scegli <b>Aggiungi alla schermata Home</b> e poi <b>Aggiungi</b>.</li></ol>'
-      : '<ol class="stack" style="margin:0;padding-left:20px"><li>Apri il menu del browser (i tre puntini in alto a destra).</li><li>Scegli <b>Installa app</b> oppure <b>Aggiungi a schermata Home</b>.</li><li>Conferma con <b>Installa</b>.</li></ol>';
-    openModal(`<h3>Installa l'app</h3><p class="muted" style="margin:-6px 0 14px">Avrai l'icona del Diario sulla schermata Home e si aprirà a schermo intero, anche senza internet.</p>${steps}`);
-  }
-};
-window.addEventListener('beforeinstallprompt',e=>{ e.preventDefault(); PWA.evt=e; });
-window.addEventListener('appinstalled',()=>{ PWA.evt=null; toast('App installata: la trovi tra le tue app'); });
-if('serviceWorker' in navigator && location.protocol.startsWith('http') && !/claudeusercontent|claude\.ai/.test(location.host)){
-  window.addEventListener('load',()=>{
-    navigator.serviceWorker.register('sw.js').then(reg=>{
-      reg.addEventListener('updatefound',()=>{ const nw=reg.installing; if(!nw) return; nw.addEventListener('statechange',()=>{ if(nw.state==='installed' && navigator.serviceWorker.controller) toast('Nuova versione pronta: riapri l\'app per vederla'); }); });
-    }).catch(()=>{});
-  });
-}
 /* Salva un file sul dispositivo: dentro Claude passa dal sistema di download di Claude, altrimenti scarica direttamente */
 async function saveFile(name, blob, okMsg){
   if(Store.downloads){
