@@ -565,9 +565,10 @@ input[type=range]{accent-color:var(--accent);width:100%}
 "use strict";
 try{ const g0=localStorage.getItem('armadio-g'); if(g0) document.documentElement.dataset.g=g0; }catch(e){}
 /* ================= VERSIONE ================= */
-const APP_VERSION='3.5';
+const APP_VERSION='3.5.1';
 const APP_DATE='27 novembre 2026';
 const CHANGELOG=[
+  ['3.5.1','Accesso con Google pronto all\'uso: non serve più incollare l\'ID client, basta premere “Accedi con Google” (in Impostazioni o nella schermata di benvenuto)'],
   ['3.5','Account con Google (facoltativo): accedi da Impostazioni o dalla schermata di benvenuto e capi, outfit, calendario, viaggi, wishlist e foto restano allineati da soli tra telefono e computer. I dati vanno in una cartella privata del tuo Google Drive che vede solo quest\'app. Funziona anche offline (sincronizza quando torna la rete) e, se modifichi lo stesso capo su due dispositivi, vince la modifica più recente. Senza accesso l\'app funziona come prima'],
   ['3.4','Foto con l\'AI dal telefono in un solo tocco: “Invia foto e testo a ChatGPT o Gemini” apre il menu Condividi e manda foto e testo insieme direttamente nell\'app scelta, senza copiare due cose e senza passare dal browser. Vale sia per la foto realistica dell\'outfit sia per “Rifalla con l\'AI”. Il vecchio metodo resta in “copia a mano”'],
   ['3.3','Provalo addosso: niente più manichino, l\'outfit si vede con i capi separati e sotto c\'è la foto realistica con l\'AI (chi la indossa, corporatura, stile, maglia infilata). Sul telefono “Apri Gemini” e “ChatGPT” aprono direttamente l\'app se è installata, altrimenti il sito'],
@@ -1813,7 +1814,7 @@ async function pasteButton(onFile){
    (appDataFolder: la vede solo quest'app, non compare tra i file). Senza accesso l'app funziona come prima.
    Sul Drive: "armadio-dati.json" (capi, outfit, calendario, viaggi, wishlist, impostazioni, senza foto)
    e una "img-<impronta>" per ogni foto. Vince sempre la modifica più recente. */
-const GOOGLE_CLIENT_ID = '';
+const GOOGLE_CLIENT_ID = '578128137375-pafnnh2qmqlm9lrnhjvmgivpidqp8d6a.apps.googleusercontent.com';
 const GSYNC = {
   scope: 'https://www.googleapis.com/auth/drive.appdata openid email profile',
   authUrl: 'https://accounts.google.com/o/oauth2/v2/auth',
