@@ -145,6 +145,15 @@ main.wrap{padding-top:30px;padding-bottom:110px;animation:viewin .35s var(--ease
 .btn.ghost{background:transparent;box-shadow:none;border-color:transparent}
 .btn.ghost:hover{background:color-mix(in srgb,var(--ink) 6%,transparent);border-color:transparent;box-shadow:none}
 .btn.danger{color:var(--bad)}
+.share-big{width:100%;min-height:54px;font-size:16px;font-weight:600}
+details.manual{border:1px solid var(--line);border-radius:14px;padding:4px 14px;background:color-mix(in srgb,var(--ink) 2%,transparent)}
+details.manual>summary{cursor:pointer;padding:10px 0;font-size:14px;color:var(--muted);list-style:none}
+details.manual>summary::-webkit-details-marker{display:none}
+details.manual>summary::before{content:"▸ ";}
+details.manual[open]>summary::before{content:"▾ ";}
+details.manual[open]{padding-bottom:14px}
+details.manual>.stack{gap:10px}
+
 .btn.danger:hover{border-color:var(--bad)}
 .btn.sm{min-height:32px;padding:0 13px;font-size:13px}
 .btn[disabled]{opacity:.42;cursor:not-allowed;box-shadow:none;transform:none}
@@ -538,9 +547,10 @@ input[type=range]{accent-color:var(--accent);width:100%}
 "use strict";
 try{ const g0=localStorage.getItem('armadio-g'); if(g0) document.documentElement.dataset.g=g0; }catch(e){}
 /* ================= VERSIONE ================= */
-const APP_VERSION='3.3';
+const APP_VERSION='3.4';
 const APP_DATE='27 novembre 2026';
 const CHANGELOG=[
+  ['3.4','Foto con l\'AI dal telefono in un solo tocco: “Invia foto e testo a ChatGPT o Gemini” apre il menu Condividi e manda foto e testo insieme direttamente nell\'app scelta, senza copiare due cose e senza passare dal browser. Vale sia per la foto realistica dell\'outfit sia per “Rifalla con l\'AI”. Il vecchio metodo resta in “copia a mano”'],
   ['3.3','Provalo addosso: niente più manichino, l\'outfit si vede con i capi separati e sotto c\'è la foto realistica con l\'AI (chi la indossa, corporatura, stile, maglia infilata). Sul telefono “Apri Gemini” e “ChatGPT” aprono direttamente l\'app se è installata, altrimenti il sito'],
   ['3.2','Aggiornamenti: quando esce una versione nuova compare un avviso su Impostazioni; nella nuova sezione “Aggiornamenti” vedi le novità e aggiorni con “Aggiorna ora”. La sezione Versione ora è corta e lo storico completo si scarica come file .txt'],
   ['3.1.4','Telefono: cartellini dei capi che si vedono interi anche su iPhone; tolto “Tutti” anche nella scelta dei capi e negli Outfit (tocca di nuovo la categoria per vederli tutti)'],
@@ -1288,6 +1298,31 @@ function aiAppHref(k){ const a=AI_APPS[k];
   if(devKind()==='android') return `intent://${a.host}#Intent;scheme=https;package=${a.android};S.browser_fallback_url=${encodeURIComponent(a.web)};end`;
   // iPhone/iPad: il link del sito apre l'app se è installata (Universal Link), altrimenti Safari
   return a.web; }
+/* Invio in un solo passaggio (telefono): menu Condividi con foto + testo insieme */
+function canShareFiles(){
+  if(devKind()==='desktop' || !navigator.share || !navigator.canShare) return false;
+  try{ return navigator.canShare({files:[new File([new Blob(['x'],{type:'image/png'})],'prova.png',{type:'image/png'})]}); }catch(e){ return false; }
+}
+function aiShareHTML(id, step=''){
+  return `<button class="btn accent share-big" id="${id}" type="button" disabled>${step}Invia foto e testo a ChatGPT o Gemini</button>
+    <p class="small muted" style="margin:0">Si apre il menu <b>Condividi</b> del telefono: scegli l'app <b>ChatGPT</b> o <b>Gemini</b> (se non le vedi, tocca “Altro”). Foto e testo arrivano insieme nella chat. Se l'app prende solo la foto, il testo è già copiato: tieni premuto nel campo e scegli <b>Incolla</b>.</p>`;
+}
+/* blobPromise: la foto già pronta (così il tocco apre subito il menu); getText: il testo da mandare */
+function bindAiShare(btn, blobPromise, getText, filename){
+  let file=null;
+  blobPromise.then(b=>{ file=new File([b], filename, {type:b.type||'image/png'}); btn.disabled=false; }).catch(()=>{ btn.disabled=false; });
+  btn.onclick=()=>{
+    const text=getText();
+    if(!file){ toast('Preparo la foto, riprova tra un attimo'); return; }
+    const data={files:[file], text};
+    let p;
+    try{ p = (navigator.canShare && navigator.canShare(data)) ? navigator.share(data) : navigator.share({files:[file]}); }
+    catch(e){ p=Promise.reject(e); }
+    try{ navigator.clipboard && navigator.clipboard.writeText(text).catch(()=>{}); }catch(e){}
+    p.then(()=>toast('Inviato! Quando la foto è pronta salvala e caricala qui'))
+     .catch(e=>{ if(e && e.name==='AbortError') return; toast('Il menu Condividi non si è aperto: copia a mano qui sotto'); const d=btn.parentElement&&btn.parentElement.querySelector('details.manual'); if(d) d.open=true; });
+  };
+}
 function aiAppButtons(prefix=''){
   const k=devKind(); const tgt = k==='desktop' ? ' target="_blank" rel="noopener noreferrer"' : (k==='ios' ? ' target="_blank" rel="noopener"' : '');
   const lab = k==='desktop' ? '' : ' (app)';
@@ -1684,25 +1719,29 @@ const CLEAN_PROMPT_DEFAULT="Individua automaticamente il capo d'abbigliamento pr
 function cleanPrompt(){ return lsGet('armadio-cleanprompt') || CLEAN_PROMPT_DEFAULT; }
 function openCleanHelper(img, onDone, opts={}){
   let done=false, result=null;
-  const prev=drawScaled(img, 1600);
+  const prev=(()=>{ const c0=drawScaled(img, 1600), c=document.createElement('canvas'); c.width=c0.width; c.height=c0.height; const g=c.getContext('2d'); g.fillStyle='#ffffff'; g.fillRect(0,0,c.width,c.height); g.drawImage(c0,0,0); return c; })(); /* fondo bianco: niente nero nei JPEG delle foto già scontornate */
+  const share=canShareFiles(), mob=devKind()!=='desktop';
+  const txtHTML=`<label class="f">Testo per l'AI <textarea class="input" id="cl-txt" style="min-height:150px;font-size:13px">${esc(cleanPrompt())}</textarea></label>`;
+  const copyHTML=`<div class="row"><button class="btn ${share?'':'accent'}" id="cl-cimg" type="button">${share?'':'1 · '}Copia la foto</button><button class="btn ${share?'':'accent'}" id="cl-ctxt" type="button">${share?'':'2 · '}Copia il testo</button></div>
+        <div class="row"><button class="btn sm ghost" id="cl-dimg" type="button">Scarica la foto</button><button class="btn sm ghost" id="cl-reset" type="button">Testo originale</button></div>`;
+  const appsHTML=`${aiAppButtons(share?'':'3 · ')}
+        <p class="small muted" style="margin:0">Nella chat incolla la foto${mob?'':' ('+PASTE_HINT+')'}, poi il testo, e invia. Quando la foto è pronta ${mob?'salvala':'copiala (o scaricala)'} e torna qui.</p>`;
   const m=openModal(`<h3>Rifai la foto con l'AI</h3>
     <p class="muted small" style="margin:-8px 0 12px">Gemini o ChatGPT tolgono persona, mani e sfondo e ti restituiscono il capo steso come in un catalogo. Poi l'app lo ritaglia da sola e sostituisce la foto attuale.</p>
     <div class="two">
       <div class="stack"><div class="photo-box" style="aspect-ratio:auto;max-height:300px"><img src="${prev.toDataURL('image/jpeg',0.9)}" alt="Foto da sistemare" style="max-height:290px"></div>
-        <div class="row"><button class="btn accent" id="cl-cimg" type="button">1 · Copia la foto</button><button class="btn sm ghost" id="cl-dimg" type="button">Scarica la foto</button></div>
-        <label class="f">Testo per l'AI <textarea class="input" id="cl-txt" style="min-height:150px;font-size:13px">${esc(cleanPrompt())}</textarea></label>
-        <div class="row"><button class="btn accent" id="cl-ctxt" type="button">2 · Copia il testo</button><button class="btn sm ghost" id="cl-reset" type="button">Testo originale</button></div>
+        ${share ? '' : txtHTML+copyHTML}
       </div>
       <div class="stack">
-        ${aiAppButtons('3 · ')}
-        <p class="small muted" style="margin:0">Nella chat incolla la foto (${PASTE_HINT}), poi il testo, e invia. Quando la foto è pronta copiala (o scaricala) e torna qui.</p>
-        <div class="flabel">4 · Incolla qui la foto rifatta</div>
-        <div class="photo-box checker" id="cl-res" style="aspect-ratio:3/4;max-height:300px;cursor:pointer"><div class="drop" id="cl-drop"><b>Premi ${PASTE_HINT} qui</b><span class="small">oppure tocca per sceglierla dai file</span></div></div>
+        ${share ? aiShareHTML('cl-share','1 · ')+`<details class="manual"><summary>Vedi o modifica il testo · copia a mano</summary><div class="stack">${txtHTML}${copyHTML}${appsHTML}</div></details>` : appsHTML}
+        <div class="flabel">${share?'2':'4'} · Riporta qui la foto rifatta</div>
+        <div class="photo-box checker" id="cl-res" style="aspect-ratio:3/4;max-height:300px;cursor:pointer"><div class="drop" id="cl-drop">${mob?'<b>Tocca qui e scegli la foto</b><span class="small">nella chat tieni premuto sulla foto → “Salva in Foto”, poi sceglila da qui</span>':'<b>Premi '+PASTE_HINT+' qui</b><span class="small">oppure tocca per sceglierla dai file</span>'}</div></div>
         <input type="file" id="cl-file" accept="image/*" class="hidden">
       </div></div>
     <div class="modal-foot"><button class="btn" id="cl-skip" type="button">Annulla</button><button class="btn accent" id="cl-ok" type="button" disabled>Usa questa foto</button></div>`,{wide:true, onClose:()=>{ if(!done){ done=true; onDone(null); } }});
   const copyBlob=async blob=>{ try{ await navigator.clipboard.write([new ClipboardItem({[blob.type]:blob})]); return true; }catch(e){ return false; } };
   const dl=async b=>{ const name='capo-da-sistemare.png'; if(Store.downloads){ try{ await Store.downloads.save({filename:name,data:b}); toast('Foto salvata'); return; }catch(e){} } const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=name; document.body.appendChild(a); a.click(); a.remove(); };
+  if(share) bindAiShare($('#cl-share',m), canvasToBlob(prev,'image/jpeg',0.92), ()=>$('#cl-txt',m).value, 'capo.jpg');
   $('#cl-cimg',m).onclick=async()=>{ const b=await canvasToBlob(prev,'image/png'); if(await copyBlob(b)) toast('Foto copiata: incollala nella chat'); else { toast('Il browser non mi lascia copiare la foto: la scarico'); dl(b); } };
   $('#cl-dimg',m).onclick=async()=>dl(await canvasToBlob(prev,'image/png'));
   const ta=$('#cl-txt',m); ta.oninput=()=>lsSet('armadio-cleanprompt', ta.value.trim()===CLEAN_PROMPT_DEFAULT?'':ta.value);
@@ -2902,20 +2941,23 @@ function outfitCover(o){ const src=o&&o.photo?imgSrc(o.photo):''; return src?`<d
 function openAIHelper(items, st, ctx){
   const board=outfitBoard(items, st); const prompt=aiPrompt(items, st, ctx.style);
   let result=null;
+  const share=canShareFiles(), mob=devKind()!=='desktop';
+  const manual=`<label class="f">Testo per l'AI (puoi modificarlo) <textarea class="input" id="ai-txt" style="min-height:${share?160:220}px;font-size:13px">${esc(prompt)}</textarea></label>
+        <div class="row"><button class="btn ${share?'':'accent'}" id="ai-cimg" type="button">${share?'':'1 · '}Copia l'immagine</button><button class="btn ${share?'':'accent'}" id="ai-ctxt" type="button">${share?'':'2 · '}Copia il testo</button><button class="btn sm ghost" id="ai-dimg" type="button">Scarica l'immagine</button></div>
+        ${aiAppButtons(share?'':'3 · ')}
+        <p class="small muted" style="margin:0">Nella chat: incolla l'immagine${mob?'':' ('+PASTE_HINT+')'}, poi incolla il testo e invia.</p>`;
   const m=openModal(`<h3>Foto realistica con l'AI</h3>
     <div class="two">
-      <div class="stack"><img src="${board.toDataURL('image/png')}" alt="I capi dell'outfit" style="width:100%;border-radius:12px;border:1px solid var(--line)">
-        <div class="row"><button class="btn accent" id="ai-cimg" type="button">1 · Copia l'immagine</button><button class="btn sm ghost" id="ai-dimg" type="button">Scarica l'immagine</button></div></div>
+      <div class="stack"><img src="${board.toDataURL('image/png')}" alt="I capi dell'outfit" style="width:100%;border-radius:12px;border:1px solid var(--line)"></div>
       <div class="stack">
-        <label class="f">Testo per l'AI (puoi modificarlo) <textarea class="input" id="ai-txt" style="min-height:220px;font-size:13px">${esc(prompt)}</textarea></label>
-        <div class="row"><button class="btn accent" id="ai-ctxt" type="button">2 · Copia il testo</button></div>
-        ${aiAppButtons('3 · ')}
-        <p class="small muted" style="margin:0">Nella chat: incolla l'immagine (${PASTE_HINT}), poi incolla il testo e invia. Se il risultato non ti convince, chiedi “rifalla” o correggi un dettaglio (“il cappotto è più lungo”, “jeans più chiari”).</p>
-        <div class="flabel" style="margin-top:6px">4 · Riporta qui la foto creata</div>
-        <div class="photo-box checker" id="ai-res" style="aspect-ratio:2/3;max-height:340px;cursor:pointer"><div class="drop" id="ai-drop"><b>Copia la foto dalla chat e premi ${PASTE_HINT} qui</b><span class="small">oppure tocca per sceglierla dai file</span></div></div>
+        ${share ? aiShareHTML('ai-share','1 · ')+`<details class="manual"><summary>Vedi o modifica il testo · copia a mano</summary><div class="stack">${manual}</div></details>` : manual}
+        <p class="small muted" style="margin:0">Se il risultato non ti convince, chiedi “rifalla” o correggi un dettaglio (“il cappotto è più lungo”, “jeans più chiari”).</p>
+        <div class="flabel" style="margin-top:6px">${share?'2':'4'} · Riporta qui la foto creata</div>
+        <div class="photo-box checker" id="ai-res" style="aspect-ratio:2/3;max-height:340px;cursor:pointer"><div class="drop" id="ai-drop">${mob?'<b>Tocca qui e scegli la foto</b><span class="small">nella chat tieni premuto sulla foto → “Salva in Foto”, poi sceglila da qui</span>':'<b>Copia la foto dalla chat e premi '+PASTE_HINT+' qui</b><span class="small">oppure tocca per sceglierla dai file</span>'}</div></div>
         <input type="file" id="ai-file" accept="image/*" class="hidden">
         <div class="row"><button class="btn accent" id="ai-save" type="button" disabled>${ctx.outfitId?'Salva come foto dell\'outfit':'Salva tra gli outfit con questa foto'}</button></div>
       </div></div>`,{wide:true});
+  if(share) bindAiShare($('#ai-share',m), canvasToBlob(board,'image/png'), ()=>$('#ai-txt',m).value, 'outfit.png');
   const copyBlob=async(blob)=>{ try{ await navigator.clipboard.write([new ClipboardItem({[blob.type]:blob})]); return true; }catch(e){ return false; } };
   $('#ai-cimg',m).onclick=async()=>{ const b=await canvasToBlob(board,'image/png'); if(await copyBlob(b)) toast('Immagine copiata: incollala nella chat'); else { toast('Il browser non mi lascia copiare l\'immagine: la scarico'); dl(b); } };
   const dl=async b=>{ const name='capi-outfit-'+todayStr()+'.png'; if(Store.downloads){ try{ await Store.downloads.save({filename:name,data:b}); toast('Immagine salvata'); return; }catch(e){} } const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=name; document.body.appendChild(a); a.click(); a.remove(); };
