@@ -103,7 +103,7 @@ h1,h2,h3{font-family:var(--display);font-weight:500;text-wrap:balance;margin:0;l
 
 /* ---------- Navigazione ---------- */
 nav.tabs{position:sticky;top:0;z-index:40;background:var(--glass);-webkit-backdrop-filter:saturate(160%) blur(14px);backdrop-filter:saturate(160%) blur(14px);border-bottom:1px solid var(--line);margin-top:8px}
-nav.tabs .wrap{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;padding-top:8px;padding-bottom:8px}
+nav.tabs .wrap{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;padding-top:11px;padding-bottom:8px}
 nav.tabs .wrap::-webkit-scrollbar{display:none}
 nav.tabs a{flex:none;display:inline-flex;align-items:center;gap:8px;padding:8px 14px;font-size:12.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-decoration:none;border-radius:var(--pill);transition:background .2s var(--ease),color .2s var(--ease)}
 nav.tabs a svg{width:17px;height:17px;flex:none;opacity:.85}
@@ -446,6 +446,8 @@ input[type=range]{accent-color:var(--accent);width:100%}
 .tb-layer{position:absolute;cursor:grab;transform-origin:center center}
 .tb-layer:active{cursor:grabbing}
 .tb-layer img,.tb-layer svg{width:100%;height:100%;display:block;object-fit:fill;filter:drop-shadow(0 4px 6px rgba(0,0,0,.18));pointer-events:none}
+.board-box{position:relative;border:1px solid var(--line);border-radius:var(--rc);overflow:hidden;background:#fff;aspect-ratio:1/1;display:flex;align-items:center;justify-content:center}.board-box img{width:100%;height:100%;object-fit:contain;display:block}.board-box .collage{width:100%;height:100%;border-radius:0}
+.ai-panel{border-color:var(--line-strong)}
 .tb-head{position:absolute;inset:0;pointer-events:none}.tb-head svg{width:100%;height:100%;display:block}
 .tb-stage .busy{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:10px}
 .tb-layer.sil img{opacity:.92}
@@ -502,6 +504,9 @@ input[type=range]{accent-color:var(--accent);width:100%}
   .view-head{margin-bottom:16px;padding-bottom:14px}
   .btn{min-height:38px}
 }
+.set-cols{column-count:2;column-gap:22px}
+.set-cols>.panel{display:inline-flex;width:100%;break-inside:avoid;-webkit-column-break-inside:avoid;margin:0 0 22px;vertical-align:top}
+@media (max-width:820px){.set-cols{column-count:1}.set-cols>.panel{margin-bottom:16px}}
 .sheet-more{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .sheet-more a{display:flex;align-items:center;gap:12px;padding:16px;border:1px solid var(--line);border-radius:var(--rc);text-decoration:none;color:var(--ink);font-weight:600;background:var(--surface);box-shadow:var(--shadow-sm)}
 .sheet-more a svg{width:22px;height:22px;color:var(--accent)}
@@ -533,9 +538,10 @@ input[type=range]{accent-color:var(--accent);width:100%}
 "use strict";
 try{ const g0=localStorage.getItem('armadio-g'); if(g0) document.documentElement.dataset.g=g0; }catch(e){}
 /* ================= VERSIONE ================= */
-const APP_VERSION='3.2';
+const APP_VERSION='3.3';
 const APP_DATE='27 novembre 2026';
 const CHANGELOG=[
+  ['3.3','Provalo addosso: niente più manichino, l\'outfit si vede con i capi separati e sotto c\'è la foto realistica con l\'AI (chi la indossa, corporatura, stile, maglia infilata). Sul telefono “Apri Gemini” e “ChatGPT” aprono direttamente l\'app se è installata, altrimenti il sito'],
   ['3.2','Aggiornamenti: quando esce una versione nuova compare un avviso su Impostazioni; nella nuova sezione “Aggiornamenti” vedi le novità e aggiorni con “Aggiorna ora”. La sezione Versione ora è corta e lo storico completo si scarica come file .txt'],
   ['3.1.4','Telefono: cartellini dei capi che si vedono interi anche su iPhone; tolto “Tutti” anche nella scelta dei capi e negli Outfit (tocca di nuovo la categoria per vederli tutti)'],
   ['3.1.3','“Esporta backup” salva direttamente il file .json (con le foto), senza doverlo creare a mano'],
@@ -1271,6 +1277,22 @@ const PWA={ evt:null,
 };
 window.addEventListener('beforeinstallprompt',e=>{ e.preventDefault(); PWA.evt=e; });
 window.addEventListener('appinstalled',()=>{ PWA.evt=null; toast('App installata: la trovi tra le tue app'); });
+/* Apri Gemini o ChatGPT: sul telefono nell'app, se c'è; altrimenti nel browser */
+const AI_APPS={
+  gemini:{name:'Gemini', web:'https://gemini.google.com/app', android:'com.google.android.apps.bard', host:'gemini.google.com/app'},
+  chatgpt:{name:'ChatGPT', web:'https://chatgpt.com/', android:'com.openai.chatgpt', host:'chatgpt.com/'},
+};
+function devKind(){ const ua=navigator.userAgent||''; if(/Android/i.test(ua)) return 'android'; if(/iPhone|iPad|iPod/.test(ua) || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1)) return 'ios'; return 'desktop'; }
+function aiAppHref(k){ const a=AI_APPS[k];
+  // Android: apre l'app; se non è installata, Chrome apre il sito (browser_fallback_url)
+  if(devKind()==='android') return `intent://${a.host}#Intent;scheme=https;package=${a.android};S.browser_fallback_url=${encodeURIComponent(a.web)};end`;
+  // iPhone/iPad: il link del sito apre l'app se è installata (Universal Link), altrimenti Safari
+  return a.web; }
+function aiAppButtons(prefix=''){
+  const k=devKind(); const tgt = k==='desktop' ? ' target="_blank" rel="noopener noreferrer"' : (k==='ios' ? ' target="_blank" rel="noopener"' : '');
+  const lab = k==='desktop' ? '' : ' (app)';
+  return `<div class="row"><a class="btn" href="${esc(aiAppHref('gemini'))}"${tgt}>${prefix}Apri Gemini${lab} ↗</a><a class="btn" href="${esc(aiAppHref('chatgpt'))}"${tgt}>oppure ChatGPT${lab} ↗</a></div>${k==='desktop'?'':'<p class="small muted" style="margin:-4px 0 0">Si apre l\'app se ce l\'hai sul telefono, altrimenti il sito.</p>'}`;
+}
 </script>
 <script>
 "use strict";
@@ -1672,7 +1694,7 @@ function openCleanHelper(img, onDone, opts={}){
         <div class="row"><button class="btn accent" id="cl-ctxt" type="button">2 · Copia il testo</button><button class="btn sm ghost" id="cl-reset" type="button">Testo originale</button></div>
       </div>
       <div class="stack">
-        <div class="row"><a class="btn" href="https://gemini.google.com/app" target="_blank" rel="noopener noreferrer">3 · Apri Gemini ↗</a><a class="btn" href="https://chatgpt.com/" target="_blank" rel="noopener noreferrer">oppure ChatGPT ↗</a></div>
+        ${aiAppButtons('3 · ')}
         <p class="small muted" style="margin:0">Nella chat incolla la foto (${PASTE_HINT}), poi il testo, e invia. Quando la foto è pronta copiala (o scaricala) e torna qui.</p>
         <div class="flabel">4 · Incolla qui la foto rifatta</div>
         <div class="photo-box checker" id="cl-res" style="aspect-ratio:3/4;max-height:300px;cursor:pointer"><div class="drop" id="cl-drop"><b>Premi ${PASTE_HINT} qui</b><span class="small">oppure tocca per sceglierla dai file</span></div></div>
@@ -2788,134 +2810,58 @@ function conformLayer(it, M, p, L){
   }
   return {url:c.toDataURL('image/png'), cv:c, x:L.cx-outW/S/2, w:outW/S};
 }
+/* Provalo addosso: l'outfit con i capi separati, e la foto realistica fatta con Gemini o ChatGPT */
 async function openTryOn(ids, title, ctx={}){
   const items=sortByCat(ids).map(i=>S.items[i]).filter(Boolean);
   if(!items.length){ toast('Questo outfit non ha capi.'); return; }
-  const st={ shape: G()==='uomo'?'uomo': G()==='donna'?'donna':'neutro', build:lsGet('armadio-build')||'media', tone:lsGet('armadio-mq')||'chiaro', sel:null, layers:[], src:{}, fit:lsGet('armadio-fit')!=='0', tuck:{} };
-  const m=openModal(`<h3>Provalo addosso${title?` <span class="muted small" style="font-family:var(--body);text-transform:none;letter-spacing:0">${esc(title)}</span>`:''}</h3>
-    <div class="tryon">
-      <div class="tb-stage" id="tb-stage"><div class="busy"><span class="spin"></span><span>Preparo il manichino…</span></div></div>
+  const st={ shape: G()==='uomo'?'uomo': G()==='donna'?'donna':'neutro', build:lsGet('armadio-build')||'media', src:{}, tuck:{}, hidden:new Set() };
+  const chip=(name,list,cur)=>`<div class="chips" id="${name}">${list.map(([v,l])=>`<button type="button" class="chip ${cur===v?'on':''}" data-v="${v}">${l}</button>`).join('')}</div>`;
+  const style=lsGet('armadio-aistyle')==='ghost'?'ghost':'persona';
+  const hasTop=items.some(i=>['top','maglieria'].includes(i.cat)), hasBottom=items.some(i=>['pantaloni','gonne'].includes(i.cat));
+  const m=openModal(`<h3>Provalo addosso${title?` <span class="muted small" style="font-family:var(--body);text-transform:none;letter-spacing:0;font-style:normal">${esc(title)}</span>`:''}</h3>
+    <div class="two">
       <div class="stack">
-        <div><div class="flabel">Manichino</div><div class="chips" id="tb-shape">${[['donna','Donna'],['uomo','Uomo'],['neutro','Neutro']].map(([v,l])=>`<button class="chip ${st.shape===v?'on':''}" data-v="${v}">${l}</button>`).join('')}</div></div>
-        <div><div class="flabel">Corporatura</div><div class="chips" id="tb-build">${[['snella','Snella'],['media','Media'],['atletica','Atletica'],['morbida','Morbida']].map(([v,l])=>`<button class="chip ${st.build===v?'on':''}" data-v="${v}">${l}</button>`).join('')}</div></div>
-        <div><div class="flabel">Colore del manichino</div><div class="chips" id="tb-tone">${Object.entries(MQ_TONES).map(([v,c])=>`<button class="swbtn ${st.tone===v?'on':''}" data-v="${v}" style="background:${c[0]}" aria-label="${v}"></button>`).join('')}</div></div>
-        <label class="check"><input type="checkbox" id="tb-fit" ${st.fit?'checked':''}> Adatta i capi al corpo (spalle, vita e fianchi del manichino)</label>
-        <div><div class="flabel">Capi <span style="text-transform:none;letter-spacing:0;font-weight:400">(tocca per nascondere o mostrare)</span></div><div class="chips" id="tb-items"></div></div>
+        <div class="board-box" id="tb-board"><div class="busy"><span class="spin"></span><span>Preparo l'outfit…</span></div></div>
+        <div><div class="flabel">Capi <span style="text-transform:none;letter-spacing:0;font-weight:400">(tocca per togliere o rimettere)</span></div><div class="chips" id="tb-items"></div></div>
         <div class="banner hidden" id="tb-cutnote" style="margin:0"><span class="small" id="tb-cutnote-t"></span><button class="btn sm accent" id="tb-cutnow" type="button">Ritaglia adesso</button></div>
-        <div class="panel stack" id="tb-ctl"><p class="small muted" style="margin:0" id="tb-hint">Tocca un capo sul manichino per spostarlo, ingrandirlo o ruotarlo.</p>
-          <label class="f">Dimensione <input type="range" id="tb-size" min="50" max="170" value="100" disabled></label>
-          <label class="f">Rotazione <input type="range" id="tb-rot" min="-30" max="30" value="0" disabled></label>
-          <div class="row"><button class="btn sm" id="tb-front" disabled>Porta davanti</button><button class="btn sm" id="tb-back" disabled>Porta dietro</button><button class="btn sm hidden" id="tb-tuck" type="button">Infila nei pantaloni</button></div></div>
-        <div class="row"><button class="btn sm ghost" id="tb-reset">Rimetti a posto</button><button class="btn" id="tb-save">Salva immagine</button></div>
-        <div class="panel stack"><div class="flabel">Foto realistica con l'AI (gratis)</div>
-          <p class="small muted" style="margin:0">Preparo un'immagine con i tuoi capi e il testo da dare a Gemini o ChatGPT: in pochi secondi creano una foto come quelle dei cataloghi, con i tuoi capi addosso a una persona inventata.</p>
-          <div class="chips" id="tb-aistyle"><button class="chip ${lsGet('armadio-aistyle')==='ghost'?'':'on'}" data-v="persona" type="button">Persona inventata</button><button class="chip ${lsGet('armadio-aistyle')==='ghost'?'on':''}" data-v="ghost" type="button">Manichino invisibile</button></div>
-          <button class="btn accent" id="tb-ai" type="button">Prepara per l'AI →</button></div>
-        <p class="small muted" style="margin:0">Le foto ritagliate dei tuoi capi appoggiate su un manichino, alla scala del corpo scelto. Per il risultato migliore usa foto del capo steso o appeso, intero e senza persone.</p>
+      </div>
+      <div class="stack">
+        <div class="panel stack ai-panel">
+          <div class="flabel">Foto realistica con l'AI (gratis)</div>
+          <p class="small muted" style="margin:0">Gemini o ChatGPT creano una foto da catalogo con i tuoi capi addosso a una persona inventata. Scegli come la vuoi, poi premi il pulsante.</p>
+          <div><div class="flabel">Chi la indossa</div>${chip('tb-shape',[['donna','Donna'],['uomo','Uomo'],['neutro','Neutro']],st.shape)}</div>
+          <div><div class="flabel">Corporatura</div>${chip('tb-build',[['snella','Snella'],['media','Media'],['atletica','Atletica'],['morbida','Morbida']],st.build)}</div>
+          <div><div class="flabel">Stile della foto</div>${chip('tb-aistyle',[['persona','Persona inventata'],['ghost','Manichino invisibile']],style)}</div>
+          ${hasTop&&hasBottom?`<label class="check"><input type="checkbox" id="tb-tuck"> Maglia infilata ${items.some(i=>i.cat==='gonne')?'nella gonna':'nei pantaloni'}</label>`:''}
+          <button class="btn accent" id="tb-ai" type="button" style="min-height:46px">Prepara per l'AI →</button>
+        </div>
+        <button class="btn" id="tb-save" type="button">Salva l'immagine dell'outfit</button>
       </div>
     </div>`,{wide:true});
-  const stage=$('#tb-stage',m);
   const needCut=[];
   await Promise.all(items.map(async it=>{ st.src[it.id]=await garmentSource(it); if(st.src[it.id].needsCut) needCut.push(it); }));
-  const place=()=>{
-    const L=mqBody(st.shape, st.build); st.L=L; const prevHidden=new Set(st.layers.filter(x=>x.hidden).map(x=>x.id));
-    st.layers=[]; let tray=0;
-    for(const it of items){ const s=st.src[it.id]; if(!s||!s.M) continue;
-      const p=placeGarment(it, s.M, L); if(p.tray){ p.y+=tray*86; tray++; }
-      let url=s.M.url, cv=s.M.canvas;
-      if(st.fit && !s.sil){ const cf=conformLayer(it, s.M, p, L); if(cf){ const ax=p.ax!=null?(p.x+p.ax*p.w):null; const ow=p.w; url=cf.url; cv=cf.cv; p.x=cf.x; p.w=cf.w; if(ax!=null) p.ax=(ax-p.x)/p.w; if(p.tfrac) p.tfrac=p.tfrac*ow/p.w; } }
-      st.layers.push(Object.assign({id:it.id, url, rot:0, scale:1, hidden:prevHidden.has(it.id), sil:!!s.sil, tuck:!!(st.tuck&&st.tuck[it.id]), hull:p.tfrac?hullOf(cv):null}, p));
-      if(p.pair){ st.layers.push(Object.assign({id:it.id, url:s.M.url, rot:0, scale:1, hidden:prevHidden.has(it.id), flip:true, twin:true}, p, {x:p.x-2*L.legX})); }
-    }
-    // strati coerenti: la maglia copre la maglietta, la giacca copre la maglia
-    const tops=st.layers.filter(x=>x.tfrac).sort((a,b)=>a.z-b.z);
-    for(let i=tops.length-2;i>=0;i--){ const inner=tops[i]; const outer=tops.slice(i+1).reduce((m,x)=>Math.min(m, x.w*x.tfrac), Infinity);
-      const iw=inner.w*inner.tfrac; if(iw>outer/1.03){ const f=(outer/1.03)/iw; const px=inner.x+inner.ax*inner.w, py=inner.y+inner.ay*inner.h; inner.w*=f; inner.h*=f; inner.x=px-inner.ax*inner.w; inner.y=py-inner.ay*inner.h; } }
-    applyMasks();
-    st.layers.push({id:'__head', head:true, z:70});
-    st.layers.sort((a,b)=>a.z-b.z);
-  };
-  // il capo sotto si vede solo dove si vedrebbe davvero: dentro la sagoma di quello sopra (anche dall'apertura
-  // di una giacca), dal collo, e un poco sotto l'orlo; se è infilato, sparisce sotto la cintura
-  function applyMasks(){
-    const tops=st.layers.filter(x=>x.tfrac && !x.hidden).sort((a,b)=>a.z-b.z);
-    const bot=st.layers.filter(x=>['pantaloni','gonne'].includes((S.items[x.id]||{}).cat) && !x.hidden).sort((a,b)=>a.y-b.y)[0];
-    st.layers.forEach(x=>{ if(x.tfrac) x.mask=null; });
-    for(let i=0;i<tops.length;i++){ const inner=tops[i];
-      const o=tops.slice(i+1).find(x=>x.sleeves);
-      let bottomY=inner.y+inner.h+20;
-      if(inner.tuck && bot){ inner.z=bot.z-1; bottomY=Math.min(bottomY, bot.y+bot.h*0.06+10); }
-      if(!o && bottomY>=inner.y+inner.h) continue;
-      const K=1.5, mw=Math.max(2,Math.ceil(inner.w*K)), mh=Math.max(2,Math.ceil(inner.h*K)); const c=document.createElement('canvas'); c.width=mw; c.height=mh; const x=c.getContext('2d'); x.fillStyle='#fff';
-      const span=(a,b,my)=>{ const xa=(a-inner.x)*K, xb=(b-inner.x)*K; if(xb>xa) x.fillRect(xa,my,xb-xa,1.2); };
-      const L=st.L; let oc,half,shy,hull; if(o){ oc=o.x+o.ax*o.w; half=o.w*o.tfrac/2+4; shy=o.y+o.ay*o.h+6; hull=o.hull; bottomY=Math.min(bottomY, o.y+o.h+26); }
-      for(let my=0;my<mh;my++){ const sy=inner.y+my/K; if(sy>bottomY) break;
-        if(!o){ x.fillRect(0,my,mw,1.2); continue; }
-        if(sy<shy) span(L.cx-L.sh*0.82,L.cx+L.sh*0.82,my);
-        if(sy>=o.y && sy<=o.y+o.h && hull){ const r=Math.min(hull.n-1,Math.floor((sy-o.y)/o.h*hull.n)); if(hull.l[r]>=0) span(o.x+hull.l[r]*o.w, o.x+hull.r[r]*o.w, my); }
-        else if(sy>o.y+o.h) span(oc-half,oc+half,my);
-      }
-      inner.mask=c.toDataURL('image/png');
-    }
-  }
-  const layerStyle=L=>`left:${L.x/6}%;top:${L.y/10}%;width:${L.w/6}%;height:${L.h/10}%;transform:rotate(${L.rot}deg)${L.flip?' scaleX(-1)':''};z-index:${L.z}${L.mask?`;-webkit-mask-image:url(${L.mask});mask-image:url(${L.mask});-webkit-mask-size:100% 100%;mask-size:100% 100%;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat`:''}`;
+  const vis=()=>items.filter(it=>!st.hidden.has(it.id));
+  let board=null;
   const draw=()=>{
-    stage.innerHTML=mqSVG(st.L,st.tone,'body') + st.layers.map((L,k)=>{
-      if(L.head) return `<div class="tb-head" style="z-index:${L.z}">${mqSVG(st.L,st.tone,'head')}</div>`;
-      if(L.hidden) return '';
-      return `<div class="tb-layer ${st.sel===k?'sel':''} ${L.sil?'sil':''}" data-k="${k}" style="${layerStyle(L)}"><img src="${L.url}" alt="" draggable="false"></div>`; }).join('');
-    const seen=new Set();
-    $('#tb-items',m).innerHTML=items.map(it=>{ const s=st.src[it.id]||{}; if(seen.has(it.id)) return ''; seen.add(it.id);
-      const L=st.layers.find(x=>x.id===it.id); const on=L && !L.hidden;
-      return `<button class="chip ${on?'on':''}" data-id="${esc(it.id)}" ${s.needsCut?'disabled title="La foto ha ancora lo sfondo"':''}>${esc(it.name)}${s.needsCut?' · da ritagliare':s.sil?' · sagoma':''}</button>`; }).join('');
+    const v=vis(); const withPic=v.filter(it=>{ const s=st.src[it.id]; return s && s.M && !s.sil; });
+    const box=$('#tb-board',m);
+    if(withPic.length){ board=outfitBoard(v, st); box.innerHTML=`<img src="${board.toDataURL('image/png')}" alt="I capi dell'outfit">`; }
+    else { board=null; box.innerHTML=collage(v.map(i=>i.id)); }
+    $('#tb-items',m).innerHTML=items.map(it=>{ const s=st.src[it.id]||{}; return `<button type="button" class="chip ${st.hidden.has(it.id)?'':'on'}" data-id="${esc(it.id)}">${catIcon(it.cat)}${esc(it.name)}${s.needsCut?' · da ritagliare':''}</button>`; }).join('');
     $('#tb-cutnote',m).classList.toggle('hidden',!needCut.length);
-    if(needCut.length) $('#tb-cutnote-t',m).textContent = needCut.length===1 ? `La foto di “${needCut[0].name}” ha ancora lo sfondo: la ritaglio e la metto sul manichino.` : `${needCut.length} foto hanno ancora lo sfondo: le ritaglio e le metto sul manichino.`;
-    const L=st.sel!=null?st.layers[st.sel]:null;
-    ['#tb-size','#tb-rot','#tb-front','#tb-back'].forEach(q=>$(q,m).disabled=!L);
-    const canTuck = L && L.tfrac && ['top','maglieria'].includes(S.items[L.id].cat) && st.layers.some(x=>['pantaloni','gonne'].includes((S.items[x.id]||{}).cat) && !x.hidden);
-    $('#tb-tuck',m).classList.toggle('hidden',!canTuck);
-    if(canTuck){ const hasSkirt=st.layers.some(x=>(S.items[x.id]||{}).cat==='gonne' && !x.hidden); $('#tb-tuck',m).textContent = L.tuck ? 'Lascia fuori' : (hasSkirt?'Infila nella gonna':'Infila nei pantaloni'); }
-    if(L){ $('#tb-size',m).value=Math.round(L.scale*100); $('#tb-rot',m).value=L.rot; $('#tb-hint',m).textContent='Selezionato: '+S.items[L.id].name+'. Trascinalo per spostarlo.'; }
-    else $('#tb-hint',m).textContent='Tocca un capo sul manichino per spostarlo, ingrandirlo o ruotarlo.';
+    if(needCut.length) $('#tb-cutnote-t',m).textContent = needCut.length===1 ? `La foto di “${needCut[0].name}” ha ancora lo sfondo: la ritaglio così compare tra i capi.` : `${needCut.length} foto hanno ancora lo sfondo: le ritaglio così compaiono tra i capi.`;
+    $('#tb-ai',m).disabled=!v.length; $('#tb-save',m).disabled=!board;
   };
-  place(); draw();
-  const twinOf=L=>st.layers.find(x=>x!==L && x.id===L.id && !x.head);
-  let drag=null;
-  stage.addEventListener('pointerdown',e=>{
-    const el=e.target.closest('.tb-layer'); if(!el){ if(st.sel!=null){ st.sel=null; draw(); } return; }
-    e.preventDefault(); const k=+el.dataset.k; st.sel=k; const r=stage.getBoundingClientRect(); const L=st.layers[k]; const T=twinOf(L);
-    drag={k, sx:e.clientX, sy:e.clientY, ox:L.x, oy:L.y, tx:T?T.x:0, ty:T?T.y:0, scx:600/r.width, scy:1000/r.height}; stage.setPointerCapture(e.pointerId); draw();
-  });
-  stage.addEventListener('pointermove',e=>{ if(!drag) return; const L=st.layers[drag.k]; const dx=(e.clientX-drag.sx)*drag.scx, dy=(e.clientY-drag.sy)*drag.scy;
-    L.x=drag.ox+dx; L.y=drag.oy+dy; const T=twinOf(L); if(T){ T.x=drag.tx+dx; T.y=drag.ty+dy; }
-    $$('.tb-layer',stage).forEach(el=>{ const Lk=st.layers[+el.dataset.k]; el.style.left=(Lk.x/6)+'%'; el.style.top=(Lk.y/10)+'%'; }); });
-  const end=()=>{ if(drag){ drag=null; applyMasks(); st.layers.sort((a,b)=>a.z-b.z); draw(); } }; stage.addEventListener('pointerup',end); stage.addEventListener('pointercancel',end);
-  const scaleL=(L,s)=>{ const old=L.scale; const cx=L.x+L.w/2, cy=L.y+L.h/2; L.w=L.w/old*s; L.h=L.h/old*s; L.scale=s; L.x=cx-L.w/2; L.y=cy-L.h/2; };
-  $('#tb-size',m).oninput=e=>{ const L=st.layers[st.sel]; if(!L) return; const s=+e.target.value/100; scaleL(L,s); const T=twinOf(L); if(T) scaleL(T,s); applyMasks(); draw(); };
-  $('#tb-rot',m).oninput=e=>{ const L=st.layers[st.sel]; if(!L) return; L.rot=+e.target.value; const T=twinOf(L); if(T) T.rot=-L.rot; draw(); };
-  const zs=()=>st.layers.map(x=>x.z);
-  $('#tb-front',m).onclick=()=>{ const L=st.layers[st.sel]; if(!L) return; const id=L.id; const z=Math.max(...zs())+1; st.layers.filter(x=>x.id===id).forEach(x=>x.z=z); st.layers.sort((a,b)=>a.z-b.z); st.sel=st.layers.findIndex(x=>x.id===id); draw(); };
-  $('#tb-back',m).onclick=()=>{ const L=st.layers[st.sel]; if(!L) return; const id=L.id; const z=Math.min(...zs())-1; st.layers.filter(x=>x.id===id).forEach(x=>x.z=z); st.layers.sort((a,b)=>a.z-b.z); st.sel=st.layers.findIndex(x=>x.id===id); draw(); };
-  $('#tb-items',m).onclick=e=>{ const b=e.target.closest('[data-id]'); if(!b||b.disabled) return; const id=b.dataset.id; const ls=st.layers.filter(x=>x.id===id); const hid=!ls[0]||!ls[0].hidden; ls.forEach(x=>x.hidden=hid); st.sel=null; applyMasks(); st.layers.sort((a,b)=>a.z-b.z); draw(); };
-  $('#tb-shape',m).onclick=e=>{ const b=e.target.closest('[data-v]'); if(!b) return; st.shape=b.dataset.v; $$('#tb-shape .chip',m).forEach(x=>x.classList.toggle('on',x===b)); st.sel=null; place(); draw(); };
-  $('#tb-build',m).onclick=e=>{ const b=e.target.closest('[data-v]'); if(!b) return; st.build=b.dataset.v; lsSet('armadio-build',st.build); $$('#tb-build .chip',m).forEach(x=>x.classList.toggle('on',x===b)); st.sel=null; place(); draw(); };
-  $('#tb-tone',m).onclick=e=>{ const b=e.target.closest('[data-v]'); if(!b) return; st.tone=b.dataset.v; lsSet('armadio-mq',st.tone); $$('#tb-tone .swbtn',m).forEach(x=>x.classList.toggle('on',x===b)); draw(); };
-  $('#tb-reset',m).onclick=()=>{ st.sel=null; st.tuck={}; place(); draw(); };
-  $('#tb-fit',m).onchange=e=>{ st.fit=e.target.checked; lsSet('armadio-fit',st.fit?'1':'0'); st.sel=null; place(); draw(); };
-  $('#tb-tuck',m).onclick=()=>{ const L=st.layers[st.sel]; if(!L) return; const id=L.id; st.tuck[id]=!st.tuck[id]; place(); st.sel=st.layers.findIndex(x=>x.id===id); draw(); };
-  $('#tb-aistyle',m).onclick=e=>{ const b=e.target.closest('[data-v]'); if(!b) return; lsSet('armadio-aistyle',b.dataset.v); $$('#tb-aistyle .chip',m).forEach(x=>x.classList.toggle('on',x===b)); };
-  $('#tb-ai',m).onclick=()=>{ const vis=items.filter(it=>{ const L=st.layers.find(x=>x.id===it.id); return !L || !L.hidden; }); openAIHelper(vis, st, {title, ids, outfitId:ctx.outfitId, style:lsGet('armadio-aistyle')==='ghost'?'ghost':'persona'}); };
-  $('#tb-cutnow',m).onclick=async()=>{ closeModal(m); await batchRecut(needCut.map(i=>i.id)); openTryOn(ids,title); };
-  $('#tb-save',m).onclick=async()=>{
-    const btn=$('#tb-save',m); btn.disabled=true; btn.textContent='Preparo…';
-    try{
-      const blob=await renderTryOn(st); const name='outfit-'+todayStr()+'.png'; let saved=false;
-      if(Store.downloads){ try{ await Store.downloads.save({filename:name, data:blob}); saved=true; toast('Immagine salvata'); }catch(e){ console.warn(e); } }
-      if(!saved && location.protocol==='file:'){ const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); a.remove(); saved=true; toast('Immagine salvata nei download'); }
-      if(!saved){ const url=URL.createObjectURL(blob); openModal(`<h3>La tua immagine</h3><p class="muted small" style="margin:-8px 0 12px">Tieni premuto (o clic destro) sull'immagine e scegli “Salva immagine”.</p><img src="${url}" alt="Outfit sul manichino" style="max-height:70vh;margin:0 auto;border-radius:12px">`); }
-    }catch(e){ console.warn(e); toast('Non sono riuscito a creare l\'immagine.'); }
-    btn.disabled=false; btn.textContent='Salva immagine';
-  };
+  draw();
+  $('#tb-items',m).onclick=e=>{ const b=e.target.closest('[data-id]'); if(!b) return; const id=b.dataset.id; st.hidden.has(id)?st.hidden.delete(id):st.hidden.add(id); draw(); };
+  const pick=(id,fn)=>{ $('#'+id,m).onclick=e=>{ const b=e.target.closest('[data-v]'); if(!b) return; $$('#'+id+' .chip',m).forEach(x=>x.classList.toggle('on',x===b)); fn(b.dataset.v); }; };
+  pick('tb-shape',v=>{ st.shape=v; });
+  pick('tb-build',v=>{ st.build=v; lsSet('armadio-build',v); });
+  pick('tb-aistyle',v=>{ lsSet('armadio-aistyle',v); });
+  if($('#tb-tuck',m)) $('#tb-tuck',m).onchange=e=>{ st.tuck={}; if(e.target.checked) items.filter(i=>['top','maglieria'].includes(i.cat)).forEach(i=>st.tuck[i.id]=true); };
+  $('#tb-ai',m).onclick=()=>openAIHelper(vis(), st, {title, ids, outfitId:ctx.outfitId, style:lsGet('armadio-aistyle')==='ghost'?'ghost':'persona'});
+  $('#tb-cutnow',m).onclick=async()=>{ closeModal(m); await batchRecut(needCut.map(i=>i.id)); openTryOn(ids,title,ctx); };
+  $('#tb-save',m).onclick=async()=>{ if(!board) return; await saveFile('outfit-'+todayStr()+'.png', await canvasToBlob(board,'image/png'), 'Immagine dell\'outfit salvata'); };
 }
 /* ===== Foto realistica con un generatore di immagini (Gemini, ChatGPT…) ===== */
 function outfitBoard(items, st){
@@ -2963,7 +2909,7 @@ function openAIHelper(items, st, ctx){
       <div class="stack">
         <label class="f">Testo per l'AI (puoi modificarlo) <textarea class="input" id="ai-txt" style="min-height:220px;font-size:13px">${esc(prompt)}</textarea></label>
         <div class="row"><button class="btn accent" id="ai-ctxt" type="button">2 · Copia il testo</button></div>
-        <div class="row"><a class="btn" href="https://gemini.google.com/app" target="_blank" rel="noopener noreferrer">3 · Apri Gemini ↗</a><a class="btn" href="https://chatgpt.com/" target="_blank" rel="noopener noreferrer">oppure ChatGPT ↗</a></div>
+        ${aiAppButtons('3 · ')}
         <p class="small muted" style="margin:0">Nella chat: incolla l'immagine (${PASTE_HINT}), poi incolla il testo e invia. Se il risultato non ti convince, chiedi “rifalla” o correggi un dettaglio (“il cappotto è più lungo”, “jeans più chiari”).</p>
         <div class="flabel" style="margin-top:6px">4 · Riporta qui la foto creata</div>
         <div class="photo-box checker" id="ai-res" style="aspect-ratio:2/3;max-height:340px;cursor:pointer"><div class="drop" id="ai-drop"><b>Copia la foto dalla chat e premi ${PASTE_HINT} qui</b><span class="small">oppure tocca per sceglierla dai file</span></div></div>
@@ -2985,23 +2931,6 @@ function openAIHelper(items, st, ctx){
       else { if(isDemo()) exitDemo(true); o={id:uid(), name:(ctx.title?ctx.title+' · ':'')+autoOutfitName(ctx.ids||items.map(i=>i.id)), items:sortByCat(ctx.ids||items.map(i=>i.id)), occasion:UI.dress.occasion||'', seasons:[dressCtx().season], fav:false, photo:ref, created:Date.now()}; }
       Store.put('outfit',o); closeModal(m); render(); toast(ctx.outfitId?'Foto aggiunta all\'outfit':'Outfit salvato con la foto'); }
     catch(e){ console.warn(e); btn.disabled=false; btn.textContent='Riprova'; toast('Non sono riuscito a salvare la foto.'); } };
-}
-async function renderTryOn(st){
-  const W=1200, H=2000, k=2; const c=document.createElement('canvas'); c.width=W; c.height=H; const x=c.getContext('2d');
-  x.fillStyle=getComputedStyle(document.body).getPropertyValue('--tag').trim()||'#eeeeee'; x.fillRect(0,0,W,H);
-  x.drawImage(await tlLoad(tlSvgUrl(mqSVG(st.L,st.tone,'body').replace('<svg ','<svg width="1200" height="2000" '))),0,0,W,H);
-  for(const L of st.layers){
-    if(L.head){ x.drawImage(await tlLoad(tlSvgUrl(mqSVG(st.L,st.tone,'head').replace('<svg ','<svg width="1200" height="2000" '))),0,0,W,H); continue; }
-    if(L.hidden) continue;
-    let im; try{ im=await tlLoad(L.url); }catch(e){ continue; }
-    x.save(); x.translate((L.x+L.w/2)*k,(L.y+L.h/2)*k); x.rotate(L.rot*Math.PI/180); if(L.flip) x.scale(-1,1);
-    if(L.mask){ const tc=document.createElement('canvas'); tc.width=Math.max(1,Math.round(L.w*k)); tc.height=Math.max(1,Math.round(L.h*k)); const tx=tc.getContext('2d'); tx.drawImage(im,0,0,tc.width,tc.height); tx.globalCompositeOperation='destination-in'; try{ tx.drawImage(await tlLoad(L.mask),0,0,tc.width,tc.height); }catch(e){} im=tc; }
-    x.shadowColor='rgba(0,0,0,.22)'; x.shadowBlur=14; x.shadowOffsetY=6;
-    x.drawImage(im,-L.w*k/2,-L.h*k/2,L.w*k,L.h*k); x.restore();
-  }
-  try{ const mk=document.querySelector('.logo-mark svg'); if(mk){ const svg=mk.outerHTML.replace(/currentColor/g,'#5a5a5e').replace('var(--logo-acc)','#b85a3c').replace('<svg ','<svg width="120" height="120" '); x.globalAlpha=.8; x.drawImage(await tlLoad(tlSvgUrl(svg)),30,H-92,60,60); x.globalAlpha=1; } }catch(e){}
-  x.fillStyle='rgba(0,0,0,.5)'; x.font='600 26px "Hanken Grotesk", Arial, sans-serif'; x.fillText("Diario dell'Armadio", 98, H-50);
-  return canvasToBlob(c,'image/png');
 }
 </script>
 <script>
@@ -3216,12 +3145,8 @@ function viewImpostazioni(){
   const counts=[['capi',Object.keys(R.items).length],['outfit',Object.keys(R.outfits).length],['giorni',Object.keys(R.logs).length],['viaggi',Object.keys(R.trips).length],['desideri',Object.keys(R.wish).length]];
   return `<div class="view-head"><div><h2>Impostazioni</h2></div></div>
   ${UPD.avail?`<div class="banner upd-banner"><span><b>È disponibile la versione ${esc(UPD.avail.v)}.</b> Le novità sono nella sezione Aggiornamenti.</span><button class="btn sm accent" id="upd-go2" type="button">Aggiorna ora</button></div>`:''}
-  <div class="cols2"><div class="stack">
+  <div class="set-cols">
     <div class="panel stack"><div class="flabel">Dove sono i tuoi dati</div><p style="margin:0">${modeText}</p><p class="small muted num" style="margin:0">${counts.map(([l,n])=>n+' '+l).join(' · ')}</p></div>
-    <div class="panel stack"><div class="flabel">Stile dell'app</div><div class="chips" id="set-g">${[['donna','Donna'],['uomo','Uomo'],['neutro','Neutro']].map(([v,l])=>`<button class="chip ${(G()||'neutro')===v?'on':''}" data-g="${v}">${l}</button>`).join('')}</div><p class="small muted" style="margin:0">Cambia colori e caratteri, le categorie mostrate, l'armadio di esempio e le ricerche su Pinterest.</p></div>
-    <div class="panel stack"><div class="flabel">Valuta</div><select class="input" id="set-cur" style="max-width:200px">${CURRENCIES.map(c=>`<option ${S.settings.currency===c?'selected':''}>${c}</option>`).join('')}</select></div>
-    <div class="panel stack"><div class="flabel">Prova</div><p style="margin:0" class="small">${isDemo()?'Stai usando l\'armadio di esempio.':'Mostra un armadio di esempio senza toccare i tuoi dati (solo se il tuo è vuoto).'}</p><div class="row">${isDemo()?'<button class="btn" data-act="exit-demo">Esci dalla prova</button>':`<button class="btn" data-act="enter-demo" ${hasReal()?'disabled':''}>Guarda l'esempio</button>`}</div></div>
-  </div><div class="stack">
     <div class="panel stack"><div class="flabel">Backup</div><p style="margin:0" class="small">Esporta tutto in un file, foto comprese. Con “Importa backup” lo riapri qui, sull'app installata o su un altro dispositivo.</p>
       <div class="row"><button class="btn" id="set-exp" ${isDemo()?'disabled':''}>Esporta backup</button><button class="btn" id="set-imp">Importa backup</button><input type="file" id="set-file" accept="application/json,.json" class="hidden"></div>
       <textarea class="input hidden" id="set-out" readonly style="min-height:120px;font-size:12px"></textarea></div>
@@ -3229,13 +3154,18 @@ function viewImpostazioni(){
     <div class="panel stack ${location.protocol.startsWith('http')&&!/claudeusercontent|claude\.ai/.test(location.host)?'':'hidden'}" id="pwa-panel"><div class="flabel">App sul telefono e sul computer</div>
       <p style="margin:0" class="small muted" id="pwa-txt">${PWA.installed()?'Stai usando l\'app installata: si apre a schermo intero e funziona anche senza internet.':'Installala: avrai l\'icona sulla schermata Home, si apre a schermo intero e funziona anche senza internet.'}</p>
       <div class="row"><button class="btn accent ${PWA.installed()?'hidden':''}" id="pwa-install" type="button">Installa l'app</button><span class="small muted" id="pwa-off"></span></div></div>
+    <div class="panel stack"><div class="flabel">Stile dell'app</div><div class="chips" id="set-g">${[['donna','Donna'],['uomo','Uomo'],['neutro','Neutro']].map(([v,l])=>`<button class="chip ${(G()||'neutro')===v?'on':''}" data-g="${v}">${l}</button>`).join('')}</div><p class="small muted" style="margin:0">Cambia colori e caratteri, le categorie mostrate, l'armadio di esempio e le ricerche su Pinterest.</p></div>
+    <div class="panel stack"><div class="flabel">Valuta</div><select class="input" id="set-cur" style="max-width:200px">${CURRENCIES.map(c=>`<option ${S.settings.currency===c?'selected':''}>${c}</option>`).join('')}</select></div>
+    <div class="panel stack"><div class="flabel">Prova</div><p style="margin:0" class="small">${isDemo()?'Stai usando l\'armadio di esempio.':'Mostra un armadio di esempio senza toccare i tuoi dati (solo se il tuo è vuoto).'}</p><div class="row">${isDemo()?'<button class="btn" data-act="exit-demo">Esci dalla prova</button>':`<button class="btn" data-act="enter-demo" ${hasReal()?'disabled':''}>Guarda l'esempio</button>`}</div></div>
+  
     <div class="panel stack"><div class="flabel">Ritaglio preciso (AI)</div><p style="margin:0" class="small muted">Se il ritaglio preciso non parte, premi qui: provo il ritaglio su una foto di esempio e ti mostro cosa succede.</p>
       <div class="row"><button class="btn" id="ai-test" type="button">Verifica il ritaglio preciso</button></div><pre id="ai-log" class="small" style="white-space:pre-wrap;margin:0;max-height:260px;overflow:auto;${AI.log.length?'':'display:none'}">${esc(AI.log.join('\n'))}</pre></div>
     <div class="panel stack"><div class="flabel">Versione</div><p style="margin:0"><b>Diario dell'Armadio ${APP_VERSION}</b> <span class="muted small">· ${APP_DATE}</span></p>
       <p style="margin:0" class="small"><span class="muted">Novità di questa versione:</span> ${esc((CHANGELOG[0]||['',''])[1])}</p>
       <div class="row"><button class="btn sm" id="set-chlog" type="button">Scarica lo storico delle versioni (.txt)</button><span class="small muted num">${CHANGELOG.length} versioni</span></div></div>
     <div class="panel stack"><div class="flabel">Zona pericolosa</div><p style="margin:0" class="small">Elimina definitivamente capi, outfit, calendario, valigie e wishlist.</p><div class="row"><button class="btn danger" id="set-wipe" ${isDemo()||!hasReal()?'disabled':''}>Cancella tutto</button></div></div>
-  </div></div>`;
+
+  </div>`;
 }
 function bindImpostazioni(v){
   UPD.paint();
